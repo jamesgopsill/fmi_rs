@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="counter"
+  guid="{12345678-1234-1234-1234-1234567890ab}"
+  numberOfEventIndicators="0">
+
+  <CoSimulation
+    modelIdentifier="counter"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <ModelVariables>
+    <!-- ValueReference 0 -->
+    <ScalarVariable name="counter" valueReference="0" causality="output" variability="continuous">
+      <Real />
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="1"/>
+    </Outputs>
+  </ModelStructure>
+</fmiModelDescription>

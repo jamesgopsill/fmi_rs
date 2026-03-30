@@ -1,0 +1,10 @@
+[workspace]
+resolver = "2"
+members = [
+  "fmi_rs",
+  "counter_fmu",
+  "multiplier_fmu"
+]
+
+[workspace.dependencies]
+fmi_rs = { path = "fmi_rs" }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="multiplier"
+  guid="{12345678-1234-1234-1234-1234567890ab}"
+  generationTool="Rust"
+  variableNamingConvention="flat">
+
+  <CoSimulation
+    modelIdentifier="multiplier"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <ModelVariables>
+    <ScalarVariable name="x" valueReference="0" causality="input">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="a" valueReference="1" causality="parameter" variability="tunable">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="y" valueReference="2" causality="output">
+      <Real />
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="3" dependencies="1 2" />
+    </Outputs>
+  </ModelStructure>
+</fmiModelDescription>
