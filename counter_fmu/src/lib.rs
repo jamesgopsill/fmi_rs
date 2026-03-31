@@ -1,5 +1,5 @@
 use fmi_rs::{
-    fmi2::{FMI2, FMI2CallbackFunctions, FMI2Status, FMI2Type},
+    fmi2::{CallbackFunctions, FMI2, Kind, Status},
     generate_fmi2_ffi,
 };
 
@@ -11,10 +11,10 @@ struct Counter {
 impl FMI2 for Counter {
     fn instantiate<'a>(
         _instance_name: &'a str,
-        _fmu_type: FMI2Type,
+        _fmu_type: Kind,
         _guid: &'a str,
         _resource_location: &'a str,
-        _functions: *const FMI2CallbackFunctions,
+        _functions: *const CallbackFunctions,
         _visible: bool,
         _logging_on: bool,
     ) -> Self {
@@ -26,17 +26,17 @@ impl FMI2 for Counter {
         _current_communication_point: f64,
         communication_step_size: f64,
         _no_set_fmu_state_prior_to_current_point: bool,
-    ) -> FMI2Status {
+    ) -> Status {
         self.count += communication_step_size;
-        FMI2Status::Ok
+        Status::Ok
     }
 
-    fn get_real(&mut self, vr: u32, value: &mut f64) -> FMI2Status {
+    fn get_real(&mut self, vr: u32, value: &mut f64) -> Status {
         match vr {
             0 => *value = self.count,
-            _ => return FMI2Status::Error,
+            _ => return Status::Error,
         }
-        FMI2Status::Ok
+        Status::Ok
     }
 }
 
