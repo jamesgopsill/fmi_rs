@@ -4,7 +4,8 @@ members = [
   "fmi_rs",
   "counter_fmu",
   "multiplier_fmu",
-  "add_fmu"
+  "addv2_fmu",
+  "addv3_fmu"
 ]
 
 [workspace.dependencies]

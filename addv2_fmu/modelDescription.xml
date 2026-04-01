@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName="addv2"
+  description="Adds two f64s."
+  instantiationToken="{32345678-1234-1234-1234-1234567890ab}"
+  generationTool="fmi_rs (Rust)"
+  author="James Gopsill"
+  license="MIT"
+  variableNamingConvention="flat">
+
+  <CoSimulation
+    modelIdentifier="addv2"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <ModelVariables>
+    <ScalarVariable name="a" valueReference="0" causality="input">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="b" valueReference="1" causality="input">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="c" valueReference="2" causality="output">
+      <Real />
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="2" dependencies="0 1" />
+    </Outputs>
+  </ModelStructure>
+</fmiModelDescription>
