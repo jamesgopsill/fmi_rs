@@ -453,6 +453,43 @@ pub trait FMI3: Sized {
     ) -> Status {
         Status::Ok
     }
+
+    fn set_interval_decimal(&mut self, _vr: u32, _interval: f64) -> Status {
+        Status::Ok
+    }
+
+    fn get_interval_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Status {
+        Status::Ok
+    }
+
+    fn set_interval_fraction(&mut self, _vr: u32, _interval: f64) -> Status {
+        Status::Ok
+    }
+
+    fn get_interval_fraction(&mut self, _vr: u32, _interval: &mut f64) -> Status {
+        Status::Ok
+    }
+
+    fn set_shift_decimal(&mut self, _vr: u32, _interval: f64) -> Status {
+        Status::Ok
+    }
+
+    fn get_shift_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Status {
+        Status::Ok
+    }
+
+    fn set_shift_fraction(&mut self, _vr: u32, _counter: u64, _resolution: u64) -> Status {
+        Status::Ok
+    }
+
+    fn get_shift_fraction(
+        &mut self,
+        _vr: u32,
+        _counter: &mut u64,
+        _resolution: &mut u64,
+    ) -> Status {
+        Status::Ok
+    }
 }
 
 #[macro_export]
@@ -849,11 +886,11 @@ macro_rules! generate_fmi3_ffi {
         generate_get_set!(fmi3GetInt8, fmi3SetInt8, get_int8, set_int8, c_schar, i8, |v: *const c_schar| unsafe { *v });
         generate_get_set!(fmi3GetInt16, fmi3SetInt16, get_int16, set_int16, c_short, i16, |v: *const c_short| unsafe { *v });
         generate_get_set!(fmi3GetInt32, fmi3SetInt32, get_int32, set_int32, c_int, i32, |v: *const c_int| unsafe { *v });
-        generate_get_set!(fmi3GetInt64, fmi3SetInt64, get_int64, set_int64, c_long, i64, |v: *const c_long| unsafe { *v });
+        generate_get_set!(fmi3GetInt64, fmi3SetInt64, get_int64, set_int64, c_longlong, i64, |v: *const c_longlong| unsafe { *v });
         generate_get_set!(fmi3GetUInt8, fmi3SetUInt8, get_uint8, set_uint8, c_uchar, u8, |v: *const c_uchar| unsafe { *v });
         generate_get_set!(fmi3GetUInt16, fmi3SetUInt16, get_uint16, set_uint16, c_ushort, u16, |v: *const c_ushort| unsafe { *v });
         generate_get_set!(fmi3GetUInt32, fmi3SetUInt32, get_uint32, set_uint32, c_uint, u32, |v: *const c_uint| unsafe { *v });
-        generate_get_set!(fmi3GetUInt64, fmi3SetUInt64, get_uint64, set_uint64, c_ulong, u64, |v: *const c_ulong| unsafe { *v });
+        generate_get_set!(fmi3GetUInt64, fmi3SetUInt64, get_uint64, set_uint64, c_ulonglong, u64, |v: *const c_ulonglong| unsafe { *v });
 
 
         generate_get_set!(
@@ -896,7 +933,10 @@ macro_rules! generate_fmi3_ffi {
             let sizes = unsafe { from_raw_parts_mut(sizes, nvals) };
             let values = unsafe { from_raw_parts_mut(values, nvals) };
             for ((vr, size), value) in zip(zip(vrs, sizes), values) {
-                model.get_binary(*vr, size, value);
+                let status = model.get_binary(*vr, size, value);
+                if status != Status::Ok {
+                    return status;
+                }
             }
             Status::Ok
         }
@@ -942,6 +982,146 @@ macro_rules! generate_fmi3_ffi {
             // OPTION: Put error when it is not 1 or 0?
             |v: *const c_int| unsafe { *v != 0 }
         );
+
+        macro_rules! generate_get_set_fmi2_format {
+            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident,$t_c:ty, $t_rust:ty,  $to_rust:expr) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(
+                    c: *mut c_void,
+                    vrs: *const c_uint,
+                    nvr: usize,
+                    values: *mut $t_c,
+                ) -> Status {
+                    let model = match unsafe { <$t>::from_ptr(c) } {
+                        Ok(m) => m,
+                        Err(e) => return e,
+                    };
+                    if vrs.is_null() || values.is_null() {
+                        return Status::Fatal;
+                    }
+                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                    let values = unsafe { from_raw_parts_mut(values, nvr) };
+                    for (vr, value) in zip(vrs, values) {
+                        let status = model.$trait_get(*vr, value);
+                        if status != Status::Ok {
+                            return status;
+                        }
+                    }
+                    Status::Ok
+                }
+
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $set_fn(
+                    c: *mut c_void,
+                    vrs: *const c_uint,
+                    nvr: usize,
+                    values: *const $t_c,
+                ) -> Status {
+                    let model = match unsafe { <$t>::from_ptr(c) } {
+                        Ok(m) => m,
+                        Err(e) => return e,
+                    };
+                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                    let values = unsafe { from_raw_parts(values, nvr) };
+                    for (vr, value) in std::iter::zip(vrs, values) {
+                        let rv: $t_rust = $to_rust(value);
+                        let status = model.$trait_set(*vr, rv);
+                        if status != Status::Ok {
+                            return status;
+                        }
+                    }
+                    Status::Ok
+                }
+            };
+        }
+
+
+        generate_get_set_fmi2_format!(
+            fmi3GetIntervalDecimal,
+            fmi3SetIntervalDecimal,
+            get_interval_decimal,
+            set_interval_decimal,
+            c_double,
+            f64,
+            |v: *const c_double| unsafe { *v }
+        );
+
+        generate_get_set_fmi2_format!(
+            fmi3GetIntervalFraction,
+            fmi3SetIntervalFraction,
+            get_interval_fraction,
+            set_interval_fraction,
+            c_double,
+            f64,
+            |v: *const c_double| unsafe { *v }
+        );
+
+        generate_get_set_fmi2_format!(
+            fmi3GetShiftDecimal,
+            fmi3SetShiftDecimal,
+            get_shift_decimal,
+            set_shift_decimal,
+            c_double,
+            f64,
+            |v: *const c_double| unsafe { *v }
+        );
+
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetShiftFraction(
+            instance: *mut c_void,
+            vrs: *const u32,
+            n: usize,
+            counters: *mut c_ulonglong,
+            resolutions: *mut c_ulonglong
+        ) -> Status {
+            let model = match unsafe { <$t>::from_ptr(instance) } {
+                Ok(m) => m,
+                Err(e) => return e,
+            };
+            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                return Status::Fatal;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, n) };
+            let counters = unsafe { from_raw_parts_mut(counters, n) };
+            let resolutions = unsafe { from_raw_parts_mut(resolutions, n) };
+            for ((vr, counter), resolution) in zip(zip(vrs, counters), resolutions) {
+                let status = model.get_shift_fraction(*vr, counter, resolution);
+                if status != Status::Ok {
+                    return status;
+                }
+            }
+            Status::Ok
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetShiftFraction(
+            instance: *mut c_void,
+            vrs: *const u32,
+            n: usize,
+            counters: *const c_ulonglong,
+            resolutions: *const c_ulonglong
+        ) -> Status {
+            let model = match unsafe { <$t>::from_ptr(instance) } {
+                Ok(m) => m,
+                Err(e) => return e,
+            };
+            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                return Status::Fatal;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, n) };
+            let counters = unsafe { from_raw_parts(counters, n) };
+            let resolutions = unsafe { from_raw_parts(resolutions, n) };
+            for ((vr, counter), resolution) in zip(zip(vrs, counters), resolutions) {
+                let status = model.set_shift_fraction(*vr, *counter, *resolution);
+                if status != Status::Ok {
+                    return status;
+                }
+            }
+            Status::Ok
+        }
+
+
 
         // -- STATE MANAGEMENT --
 
@@ -1098,7 +1278,7 @@ macro_rules! generate_fmi3_ffi {
         // -- CO-SIMULATION / STEPPING --
 
         #[unsafe(no_mangle)]
-        pub extern "C" fn fmi3DoStep(
+        pub unsafe extern "C" fn fmi3DoStep(
             instance: *mut c_void,
             current_communication_point: c_double,
             communication_step_size: c_double,

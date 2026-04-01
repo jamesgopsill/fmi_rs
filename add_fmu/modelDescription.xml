@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="add"
+  description="Adds two f64s."
+  instantiationToken="{12345678-1234-1234-1234-1234567890cd}"
+  generationTool="fmi_rs (Rust)"
+  author="James Gopsill"
+  license="MIT"
+  variableNamingConvention="structured">
+
+  <CoSimulation
+    modelIdentifier="add"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <ModelVariables>
+    <Float64 name="a" 
+             valueReference="0" 
+             causality="input" 
+             variability="continuous">
+    </Float64>
+    <Float64 name="b" 
+             valueReference="1" 
+             causality="input" 
+             variability="continuous">
+    </Float64>
+    <Float64 name="c" 
+             valueReference="2" 
+             causality="output" 
+             variability="continuous"/>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Output valueReference="2" 
+            dependencies="0 1" 
+            dependenciesKind="dependent dependent"/>
+  </ModelStructure>
+</fmiModelDescription>

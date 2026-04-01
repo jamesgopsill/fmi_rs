@@ -3,7 +3,8 @@ resolver = "2"
 members = [
   "fmi_rs",
   "counter_fmu",
-  "multiplier_fmu"
+  "multiplier_fmu",
+  "add_fmu"
 ]
 
 [workspace.dependencies]

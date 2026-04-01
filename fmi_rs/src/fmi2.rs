@@ -201,22 +201,22 @@ pub trait FMI2: Sized {
     }
 
     /// [Co-Simulation only] Queries status of asynchronous operations.
-    fn get_status(&mut self, _status_kind: StatusKind, _value: *mut Status) -> Status {
+    fn get_status(&mut self, _status_kind: StatusKind, _value: &mut Status) -> Status {
         Status::Ok
     }
 
     /// [Co-Simulation only] Queries status of a specific f64 value.
-    fn get_real_status(&mut self, _status_kind: StatusKind, _value: *mut f64) -> Status {
+    fn get_real_status(&mut self, _status_kind: StatusKind, _value: &mut f64) -> Status {
         Status::Ok
     }
 
     /// [Co-Simulation only] Queries status of a specific Integer value.
-    fn get_integer_status(&mut self, _status_kind: StatusKind, _value: *mut i32) -> Status {
+    fn get_integer_status(&mut self, _status_kind: StatusKind, _value: &mut i32) -> Status {
         Status::Ok
     }
 
     /// [Co-Simulation only] Queries status of a specific Boolean value.
-    fn get_boolean_status(&mut self, _status_kind: StatusKind, _value: *mut i32) -> Status {
+    fn get_boolean_status(&mut self, _status_kind: StatusKind, _value: &mut bool) -> Status {
         Status::Ok
     }
 
@@ -740,7 +740,11 @@ macro_rules! generate_fmi2_ffi {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            model.get_status(status_kind, value)
+            let res = unsafe { value.cast::<Status>().as_mut() };
+            match res {
+                Some(r) => model.get_status(status_kind, r),
+                None => Status::Fatal
+            }
         }
 
         /// # Safety
@@ -758,7 +762,11 @@ macro_rules! generate_fmi2_ffi {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            model.get_real_status(status_kind, value)
+            let res = unsafe { value.cast::<f64>().as_mut() };
+            match res {
+                Some(r) => model.get_real_status(status_kind, r),
+                None => Status::Fatal
+            }
         }
 
         /// # Safety
@@ -776,7 +784,11 @@ macro_rules! generate_fmi2_ffi {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            model.get_integer_status(status_kind, value)
+            let res = unsafe { value.cast::<i32>().as_mut() };
+            match res {
+                Some(r) => model.get_integer_status(status_kind, r),
+                None => Status::Fatal
+            }
         }
 
         /// # Safety
@@ -794,7 +806,21 @@ macro_rules! generate_fmi2_ffi {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            model.get_boolean_status(status_kind, value)
+            if value.is_null() {
+                return Status::Fatal;
+            }
+            let mut b = false;
+            let res = model.get_boolean_status(status_kind, &mut b);
+            match res {
+                Status::Ok => {
+                    match b {
+                        true => unsafe { *value = 1 },
+                        false => unsafe { *value = 0 }
+                    }
+                    res
+                },
+                _ => res
+            }
         }
 
         /// # Safety
