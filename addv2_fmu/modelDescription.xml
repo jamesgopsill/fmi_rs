@@ -3,7 +3,7 @@
   fmiVersion="2.0"
   modelName="addv2"
   description="Adds two f64s."
-  instantiationToken="{32345678-1234-1234-1234-1234567890ab}"
+  guid="{32345678-1234-1234-1234-1234567890ab}"
   generationTool="fmi_rs (Rust)"
   author="James Gopsill"
   license="MIT"

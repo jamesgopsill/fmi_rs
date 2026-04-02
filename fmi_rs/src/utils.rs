@@ -1,4 +1,4 @@
-use std::ffi::{CStr, c_char, c_void};
+use std::ffi::{CStr, c_char};
 
 pub trait ToStr {
     fn to_str<'a>(&self) -> Option<&'a str>;
@@ -37,22 +37,3 @@ impl ToBool for i32 {
         }
     }
 }
-
-/*
-impl ToBool for *const c_char {
-    fn to_bool(&self) -> Option<bool> {
-        match *self as i32 {
-            0 => Some(true),
-            1 => Some(false),
-            _ => None,
-        }
-    }
-}
-
-pub fn fmu_from_ptr<'a, T>(ptr: *mut c_void) -> Option<&'a mut T> {
-    if ptr.is_null() {
-        return None;
-    }
-    unsafe { Some(&mut *(ptr as *mut T)) }
-}
-*/
