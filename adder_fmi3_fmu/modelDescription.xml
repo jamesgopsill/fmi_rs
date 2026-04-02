@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="3.0"
-  modelName="addv3"
+  modelName="adder_fmi3"
   description="Adds two f64s."
   instantiationToken="{42345678-1234-1234-1234-1234567890ab}"
   generationTool="fmi_rs (Rust)"
   author="James Gopsill"
   license="MIT"
-  variableNamingConvention="structured">
+  variableNamingConvention="flat">
 
-  <CoSimulation
-    modelIdentifier="addv3"
-    canHandleVariableCommunicationStepSize="true"/>
+  <ModelExchange
+    modelIdentifier="adder_fmi3"
+    hasEventMode="false"
+    canGetAndSetFMUState="false"
+    canSerializeFMUState="false"/>
 
   <ModelVariables>
     <Float64 name="a" 
@@ -33,6 +35,9 @@
   <ModelStructure>
     <Output valueReference="2" 
             dependencies="0 1" 
-            dependenciesKind="dependent dependent"/>
+            dependenciesKind="fixed fixed"/>
+    <InitialUnknown valueReference="2"
+                    dependencies="0 1"
+                    dependenciesKind="fixed fixed"/>
   </ModelStructure>
 </fmiModelDescription>

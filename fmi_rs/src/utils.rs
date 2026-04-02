@@ -37,3 +37,26 @@ impl ToBool for i32 {
         }
     }
 }
+
+impl ToBool for u8 {
+    fn to_bool(&self) -> Option<bool> {
+        match self {
+            0 => Some(true),
+            1 => Some(false),
+            _ => None,
+        }
+    }
+}
+
+impl ToBool for *const u8 {
+    fn to_bool(&self) -> Option<bool> {
+        if self.is_null() {
+            return None;
+        }
+        match unsafe { **self } {
+            0 => Some(true),
+            1 => Some(false),
+            _ => None,
+        }
+    }
+}

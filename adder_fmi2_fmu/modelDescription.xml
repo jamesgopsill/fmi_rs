@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="addv2"
+  modelName="adder_fmi2"
   description="Adds two f64s."
   guid="{32345678-1234-1234-1234-1234567890ab}"
   generationTool="fmi_rs (Rust)"
@@ -9,8 +9,9 @@
   license="MIT"
   variableNamingConvention="flat">
 
-  <CoSimulation
-    modelIdentifier="addv2"
+  <ModelExchange
+    modelIdentifier="adder_fmi2"
+    canGetAndSetFMUState="false"
     canHandleVariableCommunicationStepSize="true"/>
 
   <ModelVariables>
@@ -27,7 +28,8 @@
 
   <ModelStructure>
     <Outputs>
-      <Unknown index="2" dependencies="0 1" />
+      <!-- Indexed as they appear in this file. -->
+      <Unknown index="3" dependencies="1 2" dependenciesKind="fixed fixed" />
     </Outputs>
   </ModelStructure>
 </fmiModelDescription>

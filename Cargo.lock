@@ -3,14 +3,14 @@
 version = 4
 
 [[package]]
-name = "addv2"
+name = "adder_fmi2"
 version = "0.1.0"
 dependencies = [
  "fmi_rs",
 ]
 
 [[package]]
-name = "addv3"
+name = "adder_fmi3"
 version = "0.1.0"
 dependencies = [
  "fmi_rs",
