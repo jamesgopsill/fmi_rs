@@ -1,4 +1,4 @@
-use std::ffi::{CStr, c_char, c_double, c_int, c_void};
+use std::ffi::{c_char, c_void};
 
 /// Represents the status returned by FMI functions.
 #[repr(i32)]
@@ -18,9 +18,9 @@ pub enum Status {
     Pending = 5,
 }
 
-impl TryFrom<c_int> for Status {
+impl TryFrom<i32> for Status {
     type Error = ();
-    fn try_from(value: c_int) -> Result<Self, ()> {
+    fn try_from(value: i32) -> Result<Self, ()> {
         match value {
             0 => Ok(Self::Ok),
             1 => Ok(Self::Warning),
@@ -41,9 +41,9 @@ pub enum Kind {
     CoSimulation = 1,
 }
 
-impl TryFrom<c_int> for Kind {
+impl TryFrom<i32> for Kind {
     type Error = Status;
-    fn try_from(value: c_int) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::ModelExchange),
             1 => Ok(Self::CoSimulation),
@@ -66,9 +66,9 @@ pub enum StatusKind {
     Terminated = 3,
 }
 
-impl TryFrom<c_int> for StatusKind {
+impl TryFrom<i32> for StatusKind {
     type Error = Status;
-    fn try_from(value: c_int) -> Result<Self, Self::Error> {
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::DoStepStatus),
             1 => Ok(Self::PendingStatus),
@@ -84,27 +84,15 @@ impl TryFrom<c_int> for StatusKind {
 /// by the accompanying macro `generate_fmi2_ffi`.
 pub trait FMI2: Sized {
     /// Informs the FMU to allocate a new instance of the model.
-    fn instantiate<'a>(
-        instance_name: &'a str,
+    fn instantiate(
+        instance_name: &str,
         fmu_type: Kind,
-        guid: &'a str,
-        resource_location: &'a str,
+        guid: &str,
+        resource_location: &str,
         functions: *const CallbackFunctions,
         visible: bool,
         logging_on: bool,
     ) -> Self;
-
-    /// Helper to convert a raw C component pointer back into a Rust reference.
-    ///
-    /// # Safety
-    /// The `ptr` must be a valid pointer to a type implementing `FMI2` that was
-    /// created during `instantiate`.
-    unsafe fn from_ptr<'a>(ptr: *mut c_void) -> Result<&'a mut Self, Status> {
-        if ptr.is_null() {
-            return Err(Status::Fatal);
-        }
-        unsafe { Ok(&mut *(ptr as *mut Self)) }
-    }
 
     /// Perform the respective actions for the FMU
     /// during a simulation step.
@@ -137,7 +125,7 @@ pub trait FMI2: Sized {
 
     /// The simulation requests the ptr to the string associated with
     /// the value reference declared in the .xml file.
-    fn get_string(&mut self, _vr: u32, _value: &mut c_char) -> Status {
+    fn get_string(&mut self, _vr: u32, _value: &mut *const c_char) -> Status {
         Status::Error
     }
 
@@ -221,7 +209,11 @@ pub trait FMI2: Sized {
     }
 
     /// [Co-Simulation only] Queries status of a specific String value.
-    fn get_string_status(&mut self, _status_kind: StatusKind, _value: *mut c_char) -> Status {
+    fn get_string_status(
+        &mut self,
+        _status_kind: StatusKind,
+        _value: *mut *const c_char,
+    ) -> Status {
         Status::Ok
     }
 
@@ -356,7 +348,7 @@ pub struct CallbackFunctions {
     pub logger: extern "C" fn(
         component_environment: *mut c_void,
         instance_name: *const c_char,
-        status: c_int,
+        status: i32,
         category: *const c_char,
         message: *const c_char,
         ...
@@ -366,7 +358,7 @@ pub struct CallbackFunctions {
     /// Function to free memory.
     pub free_memory: extern "C" fn(obj: *mut c_void),
     /// Callback for asynchronous step completion.
-    pub step_finished: extern "C" fn(component_environment: *mut c_void, status: c_int),
+    pub step_finished: extern "C" fn(component_environment: *mut c_void, status: i32),
     /// Pointer to the master's private environment data.
     pub component_environment: *mut c_void,
 }
@@ -374,62 +366,22 @@ pub struct CallbackFunctions {
 /// Structure containing information about events (Model Exchange).
 #[repr(C)]
 pub struct EventInfo {
-    pub new_discrete_states_needed: c_int,
-    pub terminate_simulation: c_int,
-    pub nominals_of_continuous_states_changed: c_int,
-    pub values_of_continuous_states_changed: c_int,
-    pub next_event_time_defined: c_int,
-    pub next_event_time: c_double,
-}
-
-pub trait ToStr {
-    fn to_str<'a>(&self) -> Result<&'a str, Status>;
-}
-
-impl ToStr for *const c_char {
-    fn to_str<'a>(&self) -> Result<&'a str, Status> {
-        if self.is_null() {
-            return Err(Status::Fatal);
-        }
-        let c_str = unsafe { CStr::from_ptr(*self) };
-        match c_str.to_str() {
-            Ok(str) => Ok(str),
-            Err(_) => Err(Status::Fatal),
-        }
-    }
-}
-
-pub trait ToBool {
-    fn to_bool(&self) -> Result<bool, Status>;
-}
-
-impl ToBool for c_int {
-    fn to_bool(&self) -> Result<bool, Status> {
-        match self {
-            0 => Ok(true),
-            1 => Ok(false),
-            _ => Err(Status::Fatal),
-        }
-    }
-}
-
-impl ToBool for *const c_int {
-    fn to_bool(&self) -> Result<bool, Status> {
-        match *self as i32 {
-            0 => Ok(true),
-            1 => Ok(false),
-            _ => Err(Status::Fatal),
-        }
-    }
+    pub new_discrete_states_needed: i32,
+    pub terminate_simulation: i32,
+    pub nominals_of_continuous_states_changed: i32,
+    pub values_of_continuous_states_changed: i32,
+    pub next_event_time_defined: i32,
+    pub next_event_time: f64,
 }
 
 #[macro_export]
 macro_rules! generate_fmi2_ffi {
     ($t: ty) => {
-        use std::ffi::{CStr, c_char, c_double, c_int, c_uint, c_void};
+        use $crate::utils::*;
+        use $crate::fmi2::*;
+        use std::ffi::*;
         use std::iter::zip;
         use std::slice::{from_raw_parts, from_raw_parts_mut};
-        use $crate::fmi2::*;
 
         // -- TRAIT BOUND CHECK --
         const _: () = {
@@ -460,33 +412,28 @@ macro_rules! generate_fmi2_ffi {
             guid: *const c_char,
             resource_location: *const c_char,
             functions: *const CallbackFunctions,
-            visible: c_int,
-            logging_on: c_int,
+            visible: i32,
+            logging_on: i32,
         ) -> *mut c_void {
-            // TODO: check structure of functions.
-            if functions.is_null()
-                || instance_name.is_null()
-                || guid.is_null()
-                || resource_location.is_null()
-            {
+            if functions.is_null() {
                 return std::ptr::null_mut();
             }
-            let Ok(instance_name) = instance_name.to_str() else {
+            let Some(instance_name) = instance_name.to_str() else {
                 return std::ptr::null_mut();
             };
-            let Ok(guid) = guid.to_str() else {
+            let Some(guid) = guid.to_str() else {
                 return std::ptr::null_mut();
             };
-            let Ok(resource_location) = resource_location.to_str() else {
+            let Some(resource_location) = resource_location.to_str() else {
                 return std::ptr::null_mut();
             };
             let Ok(fmu_type) = Kind::try_from(fmu_type) else {
                 return std::ptr::null_mut();
             };
-            let Ok(visible) = visible.to_bool() else {
+            let Some(visible) = visible.to_bool() else {
                 return std::ptr::null_mut();
             };
-            let Ok(logging_on) = logging_on.to_bool() else {
+            let Some(logging_on) = logging_on.to_bool() else {
                 return std::ptr::null_mut();
             };
             let instance = <$t>::instantiate(
@@ -505,53 +452,50 @@ macro_rules! generate_fmi2_ffi {
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2DoStep(
-            c: *mut c_void,
+            fmu: *mut $t,
             current_communication_point: c_double,
             communication_step_size: c_double,
             no_set_fmu_state_prior_to_current_point: c_int,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            let n = match no_set_fmu_state_prior_to_current_point.to_bool() {
-                Ok(n) => n,
-                Err(e) => return e,
+            let Some(n) = no_set_fmu_state_prior_to_current_point.to_bool() else {
+                return Status::Fatal;
             };
-            model.do_step(current_communication_point, communication_step_size, n)
+            fmu.do_step(current_communication_point, communication_step_size, n)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2FreeInstance(component: *mut c_void) {
-            if !component.is_null() {
-                let _ = unsafe { Box::from_raw(component as *mut $t) };
+        pub unsafe extern "C" fn fmi2FreeInstance(fmu: *mut $t) {
+            if !fmu.is_null() {
+                let _ = unsafe { Box::from_raw(fmu) };
             }
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SetupExperiment(
-            c: *mut c_void,
-            tolerance_defined: c_int,
-            tolerance: c_double,
-            start_time: c_double,
-            stop_time_defined: c_int,
-            stop_time: c_double,
+            fmu: *mut $t,
+            tolerance_defined: i32,
+            tolerance: f64,
+            start_time: f64,
+            stop_time_defined: i32,
+            stop_time: f64,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            let tolerance_defined = match tolerance_defined.to_bool() {
-                Ok(n) => n,
-                Err(e) => return e,
+            let Some(tolerance_defined) = tolerance_defined.to_bool() else {
+                return Status::Fatal;
             };
-            let stop_time_defined = match stop_time_defined.to_bool() {
-                Ok(n) => n,
-                Err(e) => return e,
+            let Some(stop_time_defined) = stop_time_defined.to_bool() else {
+                return Status::Fatal;
             };
-            model.setup_experiment(
+            fmu.setup_experiment(
                 tolerance_defined,
                 tolerance,
                 start_time,
@@ -562,55 +506,55 @@ macro_rules! generate_fmi2_ffi {
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2EnterInitializationMode(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2EnterInitializationMode(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.enter_initialization_mode()
+            fmu.enter_initialization_mode()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2ExitInitializationMode(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2ExitInitializationMode(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.exit_initialization_mode()
+            fmu.exit_initialization_mode()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2Terminate(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2Terminate(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.terminate()
+            fmu.terminate()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2Reset(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2Reset(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.reset()
+            fmu.reset()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SetDebugLogging(
-            c: *mut c_void,
-            logging_on: c_int,
+            fmu: *mut $t,
+            logging_on: i32,
             n_categories: usize,
             categories: *const *const c_char,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if categories.is_null() {
                 return Status::Fatal;
@@ -627,25 +571,24 @@ macro_rules! generate_fmi2_ffi {
                     Err(_) => return Status::Fatal,
                 }
             }
-            let logging_on = match logging_on.to_bool() {
-                Ok(n) => n,
-                Err(e) => return e,
+            let Some(logging_on) = logging_on.to_bool() else {
+                return Status::Fatal;
             };
-            model.set_debug_logging(logging_on, cats)
+            fmu.set_debug_logging(logging_on, cats)
         }
 
         macro_rules! generate_get_set {
-            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident,$t_c:ty, $t_rust:ty,  $to_rust:expr) => {
+            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident, $t_val:ty, $to_rust:expr) => {
                 #[unsafe(no_mangle)]
                 pub unsafe extern "C" fn $get_fn(
-                    c: *mut c_void,
-                    vrs: *const c_uint,
+                    fmu: *mut $t,
+                    vrs: *const u32,
                     nvr: usize,
-                    values: *mut $t_c,
+                    values: *mut $t_val,
                 ) -> Status {
-                    let model = match unsafe { <$t>::from_ptr(c) } {
-                        Ok(m) => m,
-                        Err(e) => return e,
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Status::Fatal,
                     };
                     if vrs.is_null() || values.is_null() {
                         return Status::Fatal;
@@ -653,7 +596,7 @@ macro_rules! generate_fmi2_ffi {
                     let vrs = unsafe { from_raw_parts(vrs, nvr) };
                     let values = unsafe { from_raw_parts_mut(values, nvr) };
                     for (vr, value) in zip(vrs, values) {
-                        let status = model.$trait_get(*vr, value);
+                        let status = fmu.$trait_get(*vr, value);
                         if status != Status::Ok {
                             return status;
                         }
@@ -663,20 +606,20 @@ macro_rules! generate_fmi2_ffi {
 
                 #[unsafe(no_mangle)]
                 pub unsafe extern "C" fn $set_fn(
-                    c: *mut c_void,
-                    vrs: *const c_uint,
+                    fmu: *mut $t,
+                    vrs: *const u32,
                     nvr: usize,
-                    values: *const $t_c,
+                    values: *const $t_val,
                 ) -> Status {
-                    let model = match unsafe { <$t>::from_ptr(c) } {
-                        Ok(m) => m,
-                        Err(e) => return e,
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Status::Fatal,
                     };
                     let vrs = unsafe { from_raw_parts(vrs, nvr) };
                     let values = unsafe { from_raw_parts(values, nvr) };
                     for (vr, value) in std::iter::zip(vrs, values) {
-                        let rv: $t_rust = $to_rust(value);
-                        let status = model.$trait_set(*vr, rv);
+                        let rv = $to_rust(value);
+                        let status = fmu.$trait_set(*vr, rv);
                         if status != Status::Ok {
                             return status;
                         }
@@ -692,115 +635,117 @@ macro_rules! generate_fmi2_ffi {
             fmi2SetInteger,
             get_integer,
             set_integer,
-            c_int,
             i32,
-            |v: *const c_int| unsafe { *v }
+            |v: *const i32| unsafe { *v }
         );
+
         generate_get_set!(
             fmi2GetReal,
             fmi2SetReal,
             get_real,
             set_real,
-            c_double,
             f64,
-            |v: *const c_double| unsafe { *v }
+            |v: *const f64| unsafe { *v }
         );
+
         generate_get_set!(
             fmi2GetBoolean,
             fmi2SetBoolean,
             get_boolean,
             set_boolean,
-            c_int,
-            bool,
-            // OPTION: Put error when it is not 1 or 0?
-            |v: *const c_int| unsafe { *v != 0 }
+            i32,
+            |v: *const i32| unsafe { *v != 0 }
         );
+
         generate_get_set!(
             fmi2GetString,
             fmi2SetString,
             get_string,
             set_string,
-            c_char,
-            &str,
-            |v: *const c_char| v.to_str().unwrap_or("")
+            *const c_char,
+            |v: *const *const c_char| {
+                let v = unsafe { *v };
+                v.to_str().unwrap_or("")
+            }
         );
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetStatus(
-            c: *mut c_void,
-            status_kind: c_int,
+            fmu: *mut $t,
+            status_kind: i32,
             value: *mut Status,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             let status_kind = match StatusKind::try_from(status_kind) {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            let res = unsafe { value.cast::<Status>().as_mut() };
-            match res {
-                Some(r) => model.get_status(status_kind, r),
-                None => Status::Fatal
+            let mut status = Status::Ok;
+            let res = fmu.get_status(status_kind, &mut status);
+            if res == Status::Ok {
+               unsafe { *value  = status }
             }
+            res
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetRealStatus(
-            c: *mut c_void,
-            status_kind: c_int,
-            value: *mut c_double,
+            fmu: *mut $t,
+            status_kind: i32,
+            value: *mut f64,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             let status_kind = match StatusKind::try_from(status_kind) {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            let res = unsafe { value.cast::<f64>().as_mut() };
-            match res {
-                Some(r) => model.get_real_status(status_kind, r),
-                None => Status::Fatal
-            }
+            let value = match unsafe { value.as_mut() } {
+                Some(v) => v,
+                None => return Status::Fatal,
+            };
+            fmu.get_real_status(status_kind, value)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetIntegerStatus(
-            c: *mut c_void,
-            status_kind: c_int,
-            value: *mut c_int,
+            fmu: *mut $t,
+            status_kind: i32,
+            value: *mut i32,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             let status_kind = match StatusKind::try_from(status_kind) {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            let res = unsafe { value.cast::<i32>().as_mut() };
-            match res {
-                Some(r) => model.get_integer_status(status_kind, r),
-                None => Status::Fatal
-            }
+            let value = match unsafe { value.as_mut() } {
+                Some(v) => v,
+                None => return Status::Fatal,
+            };
+            fmu.get_integer_status(status_kind, value)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetBooleanStatus(
-            c: *mut c_void,
-            status_kind: c_int,
-            value: *mut c_int,
+            fmu: *mut $t,
+            status_kind: i32,
+            value: *mut i32,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             let status_kind = match StatusKind::try_from(status_kind) {
                 Ok(n) => n,
@@ -810,7 +755,7 @@ macro_rules! generate_fmi2_ffi {
                 return Status::Fatal;
             }
             let mut b = false;
-            let res = model.get_boolean_status(status_kind, &mut b);
+            let res = fmu.get_boolean_status(status_kind, &mut b);
             match res {
                 Status::Ok => {
                     match b {
@@ -826,43 +771,46 @@ macro_rules! generate_fmi2_ffi {
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetStringStatus(
-            c: *mut c_void,
-            status_kind: c_int,
-            value: *mut c_char,
+            fmu: *mut $t,
+            status_kind: i32,
+            value: *mut *const c_char,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             let status_kind = match StatusKind::try_from(status_kind) {
                 Ok(n) => n,
                 Err(e) => return e,
             };
-            model.get_string_status(status_kind, value)
+            if value.is_null() {
+                return Status::Fatal;
+            }
+            fmu.get_string_status(status_kind, value)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2CancelStep(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2CancelStep(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.cancel_step()
+            fmu.cancel_step()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
-            c: *mut c_void,
-            vr: *const c_uint,
+            fmu: *mut $t,
+            vr: *const u32,
             nvr: usize,
-            order: *const c_int,
-            value: *const c_double,
+            order: *const i32,
+            value: *const f64,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if vr.is_null() || order.is_null() || value.is_null() {
                 return Status::Fatal;
@@ -871,7 +819,7 @@ macro_rules! generate_fmi2_ffi {
             let orders = unsafe { std::slice::from_raw_parts(order, nvr) };
             let values = unsafe { std::slice::from_raw_parts(value, nvr) };
             for i in 0..vrs.len() {
-                let status = model.set_real_input_derivative(vrs[i], orders[i], values[i]);
+                let status = fmu.set_real_input_derivative(vrs[i], orders[i], values[i]);
                 if status != Status::Ok {
                     return status;
                 }
@@ -882,15 +830,15 @@ macro_rules! generate_fmi2_ffi {
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
-            c: *mut c_void,
-            vr: *const c_uint,
+            fmu: *mut $t,
+            vr: *const u32,
             nvr: usize,
-            order: *const c_int,
-            value: *mut c_double,
+            order: *const i32,
+            value: *mut f64,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if vr.is_null() || order.is_null() || value.is_null() {
                 return Status::Fatal;
@@ -899,7 +847,7 @@ macro_rules! generate_fmi2_ffi {
             let orders = unsafe { from_raw_parts(order, nvr) };
             let values = unsafe { from_raw_parts_mut(value, nvr) };
             for i in 0..vrs.len() {
-                let status = model.get_real_output_derivative(vrs[i], &orders[i], &mut values[i]);
+                let status = fmu.get_real_output_derivative(vrs[i], &orders[i], &mut values[i]);
                 if status != Status::Ok {
                     return status;
                 }
@@ -910,115 +858,116 @@ macro_rules! generate_fmi2_ffi {
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SerializedFMUstateSize(
-            c: *mut c_void,
+            fmu: *mut $t,
             state: *mut c_void,
             size: *mut usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.serialized_fmu_state_size(state, size)
+            fmu.serialized_fmu_state_size(state, size)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SerializeFMUstate(
-            c: *mut c_void,
+            fmu: *mut $t,
             state: *mut c_void,
             serialized_state: *mut u8, // fmi2Byte is u8
             size: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if state.is_null() || serialized_state.is_null() {
                 return Status::Fatal;
             }
             let buffer = unsafe { from_raw_parts_mut(serialized_state, size) };
-            model.serialize_fmu_state(state, buffer)
+            fmu.serialize_fmu_state(state, buffer)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
-            c: *mut c_void,
+            fmu: *mut $t,
             serialized_state: *const u8, // fmi2Byte is u8
             size: usize,
             state: *mut *mut c_void,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if state.is_null() || serialized_state.is_null() {
                 return Status::Fatal;
             }
             let buffer = unsafe { std::slice::from_raw_parts(serialized_state, size) };
-            model.deserialized_fmu_state(buffer, size, state)
+            fmu.deserialized_fmu_state(buffer, size, state)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetFMUstate(
-            c: *mut c_void,
+            fmu: *mut $t,
             state: *mut *mut c_void,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if state.is_null() {
                 return Status::Fatal;
             }
-            model.get_fmu_state(state)
+            fmu.get_fmu_state(state)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2SetFMUstate(c: *mut c_void, state: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2SetFMUstate(fmu: *mut $t, state: *mut c_void) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if state.is_null() {
                 return Status::Fatal;
             }
-            model.set_fmu_state(state)
+            fmu.set_fmu_state(state)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2FreeFMUstate(
-            c: *mut c_void,
+            fmu: *mut $t,
             state: *mut c_void,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if state.is_null() {
                 return Status::Fatal;
             }
-            model.free_fmu_state(state)
+            fmu.free_fmu_state(state)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
-            c: *mut c_void,
-            v_unknown_ptr: *const c_uint,
+            fmu: *mut $t,
+            v_unknown_ptr: *const u32,
             n_unknown: usize,
-            v_known_ptr: *const c_uint,
+            v_known_ptr: *const u32,
             n_known: usize,
-            dv_known_ptr: *const c_double,
-            dv_unknown_mut_ptr: *mut c_double,
+            dv_known_ptr: *const f64,
+            dv_unknown_mut_ptr: *mut f64,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
+
             if v_unknown_ptr.is_null()
                 || v_known_ptr.is_null()
                 || dv_known_ptr.is_null()
@@ -1026,207 +975,176 @@ macro_rules! generate_fmi2_ffi {
             {
                 return Status::Fatal;
             }
-            let v_unknown = if n_unknown > 0 {
-                unsafe { from_raw_parts(v_unknown_ptr, n_unknown) }
-            } else {
-                &[]
-            };
 
-            let dv_unknown = if n_unknown > 0 {
-                unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_unknown) }
-            } else {
-                &mut []
-            };
+            let v_unknown = unsafe { from_raw_parts(v_unknown_ptr, n_unknown) };
+            let dv_unknown = unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_unknown) };
+            let v_known = unsafe { from_raw_parts(v_known_ptr, n_known) };
+            let dv_known = unsafe { from_raw_parts(dv_known_ptr, n_known) };
 
-            let v_known = if n_known > 0 {
-                unsafe { from_raw_parts(v_known_ptr, n_known) }
-            } else {
-                &[]
-            };
-
-            let dv_known = if n_known > 0 {
-                unsafe { from_raw_parts(dv_known_ptr, n_known) }
-            } else {
-                &[]
-            };
-
-            model.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
+            fmu.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2EnterEventMode(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2EnterEventMode(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.enter_event_mode()
+            fmu.enter_event_mode()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2NewDiscreteStates(
-            c: *mut c_void,
+            fmu: *mut $t,
             info: *mut EventInfo,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.new_discrete_states(info)
+            fmu.new_discrete_states(info)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2EnterContinuousTimeMode(c: *mut c_void) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2EnterContinuousTimeMode(fmu: *mut $t) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.enter_continuous_time_mode()
+            fmu.enter_continuous_time_mode()
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2CompletedIntegratorStep(
-            c: *mut c_void,
-            no_prior: c_int,
-            enter_event: *mut c_int,
-            term: *mut c_int,
+            fmu: *mut $t,
+            no_prior: i32,
+            enter_event: *mut i32,
+            term: *mut i32,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if enter_event.is_null() || term.is_null() {
                 return Status::Fatal;
             }
-            model.completed_integrator_step(no_prior, enter_event, term)
+            fmu.completed_integrator_step(no_prior, enter_event, term)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2SetTime(c: *mut c_void, time: c_double) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+        pub unsafe extern "C" fn fmi2SetTime(fmu: *mut $t, time: f64) -> Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
-            model.set_time(time)
+            fmu.set_time(time)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SetContinuousStates(
-            c: *mut c_void,
-            x: *const c_double,
+            fmu: *mut $t,
+            x: *const f64,
             nx: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
             if x.is_null() {
                 return Status::Fatal;
             }
-            let x = if nx > 0 {
-                unsafe { from_raw_parts(x, nx) }
-            } else {
-                &[]
-            };
-
-            model.set_continuous_states(x)
+            let x = unsafe { from_raw_parts(x, nx) };
+            fmu.set_continuous_states(x)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetDerivatives(
-            c: *mut c_void,
-            dx: *mut c_double,
+            fmu: *mut $t,
+            dx: *mut f64,
             nx: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
+
             if dx.is_null() {
                 return Status::Fatal;
             }
-            let dx = if nx > 0 {
-                unsafe { from_raw_parts_mut(dx, nx) }
-            } else {
-                &mut []
-            };
 
-            model.get_derivatives(dx)
+            let dx = unsafe { from_raw_parts_mut(dx, nx) };
+
+            fmu.get_derivatives(dx)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetEventIndicators(
-            c: *mut c_void,
-            ei: *mut c_double,
+            fmu: *mut $t,
+            ei: *mut f64,
             ni: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
+
             if ei.is_null() {
                 return Status::Fatal;
             }
-            let ei = if ni > 0 {
-                unsafe { from_raw_parts_mut(ei, ni) }
-            } else {
-                &mut []
-            };
 
-            model.get_event_indicators(ei)
+            let ei = unsafe { from_raw_parts_mut(ei, ni) };
+
+            fmu.get_event_indicators(ei)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetContinuousStates(
-            c: *mut c_void,
-            x: *mut c_double,
+            fmu: *mut $t,
+            x: *mut f64,
             nx: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
+
             if x.is_null() {
                 return Status::Fatal;
             }
-            let x = if nx > 0 {
-                unsafe { from_raw_parts_mut(x, nx) }
-            } else {
-                &mut []
-            };
 
-            model.get_continuous_states(x)
+            let x = unsafe { from_raw_parts_mut(x, nx) };
+
+            fmu.get_continuous_states(x)
         }
 
         /// # Safety
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetNominalsOfContinuousStates(
-            c: *mut c_void,
-            x: *mut c_double,
+            fmu: *mut $t,
+            x: *mut f64,
             nx: usize,
         ) -> Status {
-            let model = match unsafe { <$t>::from_ptr(c) } {
-                Ok(model) => model,
-                Err(e) => return e,
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Status::Fatal,
             };
+
             if x.is_null() {
                 return Status::Fatal;
             }
-            let x = if nx > 0 {
-                unsafe { from_raw_parts_mut(x, nx) }
-            } else {
-                &mut []
-            };
 
-            model.get_nominals_of_continuous_states(x)
+            let x = unsafe { from_raw_parts_mut(x, nx) };
+
+            fmu.get_nominals_of_continuous_states(x)
         }
     };
 }
@@ -1236,10 +1154,10 @@ mod cargo_check {
     // Usesd to get type checking on the macro.
     use crate::fmi2::{CallbackFunctions, FMI2, Kind};
     #[derive(Default)]
-    struct Counter {
+    pub struct Fmu {
         count: f64,
     }
-    impl FMI2 for Counter {
+    impl FMI2 for Fmu {
         fn instantiate<'a>(
             _instance_name: &'a str,
             _fmu_type: Kind,
@@ -1270,5 +1188,5 @@ mod cargo_check {
             Status::Ok
         }
     }
-    generate_fmi2_ffi!(Counter);
+    generate_fmi2_ffi!(Fmu);
 }

@@ -28,6 +28,16 @@ impl ToBool for c_char {
     }
 }
 
+impl ToBool for i32 {
+    fn to_bool(&self) -> Option<bool> {
+        match self {
+            0 => Some(true),
+            1 => Some(false),
+            _ => None,
+        }
+    }
+}
+
 /*
 impl ToBool for *const c_char {
     fn to_bool(&self) -> Option<bool> {
@@ -38,10 +48,11 @@ impl ToBool for *const c_char {
         }
     }
 }
-*/
+
 pub fn fmu_from_ptr<'a, T>(ptr: *mut c_void) -> Option<&'a mut T> {
     if ptr.is_null() {
         return None;
     }
     unsafe { Some(&mut *(ptr as *mut T)) }
 }
+*/
