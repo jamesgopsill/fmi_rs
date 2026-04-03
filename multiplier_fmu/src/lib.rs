@@ -1,7 +1,4 @@
-use fmi_rs::{
-    fmi2::{CallbackFunctions, FMI2, Kind, Status},
-    generate_fmi2_ffi,
-};
+use fmi_rs::{fmi2::*, generate_fmi2_ffi};
 
 #[derive(Default)]
 struct Multiplier {
@@ -10,47 +7,47 @@ struct Multiplier {
     output: f64,
 }
 
-impl FMI2 for Multiplier {
-    fn instantiate<'a>(
-        _instance_name: &'a str,
-        _fmu_type: Kind,
-        _guid: &'a str,
-        _resource_location: &'a str,
+impl Fmi2 for Multiplier {
+    fn instantiate(
+        _instance_name: Fmi2Str,
+        _fmu_type: Fmi2Type,
+        _guid: Fmi2Str,
+        _resource_location: Fmi2Str,
         _functions: *const CallbackFunctions,
-        _visible: bool,
-        _logging_on: bool,
+        _visible: Fmi2Bool,
+        _logging_on: Fmi2Bool,
     ) -> Self {
         Self::default()
     }
 
     fn do_step(
         &mut self,
-        _current_communication_point: f64,
-        _communication_step_size: f64,
-        _no_set_fmu_state_prior_to_current_point: bool,
-    ) -> Status {
+        _current_communication_point: Fmi2Real,
+        _communication_step_size: Fmi2Real,
+        _no_set_fmu_state_prior_to_current_point: Fmi2Bool,
+    ) -> Fmi2Status {
         self.output = self.input * self.multiplier;
-        Status::Ok
+        Fmi2Status::OK
     }
 
-    fn get_real(&mut self, vr: u32, value: &mut f64) -> Status {
+    fn get_real(&mut self, vr: Fmi2Uint, value: &mut Fmi2Real) -> Fmi2Status {
         match vr {
             0 => *value = self.input,
             1 => *value = self.multiplier,
             2 => *value = self.output,
-            _ => return Status::Error,
+            _ => return Fmi2Status::ERROR,
         }
-        Status::Ok
+        Fmi2Status::OK
     }
 
-    fn set_real(&mut self, vr: u32, value: f64) -> Status {
+    fn set_real(&mut self, vr: Fmi2Uint, value: Fmi2Real) -> Fmi2Status {
         match vr {
             0 => self.input = value,
             1 => self.multiplier = value,
             2 => self.output = value,
-            _ => return Status::Error,
+            _ => return Fmi2Status::ERROR,
         }
-        Status::Ok
+        Fmi2Status::OK
     }
 }
 

@@ -60,3 +60,16 @@ impl ToBool for *const u8 {
         }
     }
 }
+
+impl ToBool for *mut u8 {
+    fn to_bool(&self) -> Option<bool> {
+        if self.is_null() {
+            return None;
+        }
+        match unsafe { **self } {
+            0 => Some(true),
+            1 => Some(false),
+            _ => None,
+        }
+    }
+}

@@ -459,12 +459,12 @@ pub trait FMI3: Sized {
 
     fn update_discrete_states(
         &mut self,
-        _discrete_states_needs_update: bool,
-        _terminate_simulation: bool,
-        _nominals_of_continuous_states_changed: bool,
-        _values_of_continuous_states_changed: bool,
-        _next_event_time_defined: bool,
-        _next_event_time: f64,
+        _discrete_states_needs_update: &mut bool,
+        _terminate_simulation: &mut bool,
+        _nominals_of_continuous_states_changed: &mut bool,
+        _values_of_continuous_states_changed: &mut bool,
+        _next_event_time_defined: &mut bool,
+        _next_event_time: &mut f64,
     ) -> Status {
         Status::Ok
     }
@@ -1202,6 +1202,10 @@ macro_rules! generate_fmi3_ffi {
             let Some(no_set_fmu_state_prior) = no_set_fmu_state_prior.to_bool() else {
                 return Status::Fatal;
             };
+            let last_successful_time = match unsafe { last_successful_time.as_mut() } {
+                Some(l) => l,
+                None => return Status::Fatal,
+            };
 
             let mut ev = false;
             let mut term = false;
@@ -1214,7 +1218,7 @@ macro_rules! generate_fmi3_ffi {
                 &mut ev,
                 &mut term,
                 &mut er,
-                unsafe { &mut *last_successful_time },
+                last_successful_time,
             );
 
             match (ev) {
@@ -1374,37 +1378,54 @@ macro_rules! generate_fmi3_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
             fmu: *mut $t,
-            discrete_states_needs_update: *const u8,
-            terminate_simulation: *const u8,
-            nominals_of_continuous_states_changed: *const u8,
-            values_of_continuous_states_changed: *const u8,
-            next_event_time_defined: *const u8,
-            next_event_time: *const f64
+            discrete_states_needs_update: *mut u8,
+            terminate_simulation: *mut u8,
+            nominals_of_continuous_states_changed: *mut u8,
+            values_of_continuous_states_changed: *mut u8,
+            next_event_time_defined: *mut u8,
+            next_event_time: *mut f64
         ) -> Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
                 None => return Status::Fatal,
             };
-            let Some(discrete) = discrete_states_needs_update.to_bool() else {
+            let Some(mut discrete) = discrete_states_needs_update.to_bool() else {
                 return Status::Fatal;
             };
-            let Some(terminate) = terminate_simulation.to_bool() else {
+            let Some(mut terminate) = terminate_simulation.to_bool() else {
                 return Status::Fatal;
             };
-            let Some(nominals) = nominals_of_continuous_states_changed.to_bool() else {
+            let Some(mut nominals) = nominals_of_continuous_states_changed.to_bool() else {
                 return Status::Fatal;
             };
-            let Some(values) = values_of_continuous_states_changed.to_bool() else {
+            let Some(mut values) = values_of_continuous_states_changed.to_bool() else {
                 return Status::Fatal;
             };
-            let Some(next) = next_event_time_defined.to_bool() else {
+            let Some(mut next) = next_event_time_defined.to_bool() else {
                 return Status::Fatal;
             };
-            if next_event_time.is_null() {
-                return Status::Fatal;
+            let time = match unsafe { next_event_time.as_mut() } {
+                Some(t) => t,
+                None => return Status::Fatal
+            };
+            let status = fmu.update_discrete_states(&mut discrete, &mut terminate, &mut nominals, &mut values, &mut next, time);
+            match (discrete) {
+                true => unsafe { *discrete_states_needs_update = 1 },
+                false => unsafe { *discrete_states_needs_update = 0 }
             }
-            let time = unsafe { *next_event_time };
-            fmu.update_discrete_states(discrete, terminate, nominals, values, next, time)
+            match (terminate) {
+                true => unsafe { *terminate_simulation = 1 },
+                false => unsafe { *terminate_simulation = 0 }
+            }
+            match (nominals) {
+                true => unsafe { *nominals_of_continuous_states_changed = 1 },
+                false => unsafe { *nominals_of_continuous_states_changed = 0 }
+            }
+            match (next) {
+                true => unsafe { *next_event_time_defined = 1 },
+                false => unsafe { *next_event_time_defined = 0 }
+            }
+            status
         }
     };
 }
