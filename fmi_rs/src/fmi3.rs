@@ -155,103 +155,103 @@ pub trait Fmi3: Sized {
         Fmi3Status::OK
     }
 
-    fn get_float64(&mut self, _vr: u32, _value: &mut [f64]) -> Fmi3Status {
+    fn get_float64(&mut self, _vr: u32, _value: &mut f64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_float64(&mut self, _vr: u32, _value: &[f64]) -> Fmi3Status {
+    fn set_float64(&mut self, _vr: u32, _value: f64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_float32(&mut self, _vr: u32, _value: &mut &[f32]) -> Fmi3Status {
+    fn get_float32(&mut self, _vr: u32, _value: &mut f32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_float32(&mut self, _vr: u32, _value: &[f32]) -> Fmi3Status {
+    fn set_float32(&mut self, _vr: u32, _value: f32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int8(&mut self, _vr: u32, _value: &mut [i8]) -> Fmi3Status {
+    fn get_int8(&mut self, _vr: u32, _value: &mut i8) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int8(&mut self, _vr: u32, _value: &[i8]) -> Fmi3Status {
+    fn set_int8(&mut self, _vr: u32, _value: i8) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int16(&mut self, _vr: u32, _value: &mut [i16]) -> Fmi3Status {
+    fn get_int16(&mut self, _vr: u32, _value: &mut i16) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int16(&mut self, _vr: u32, _value: &[i16]) -> Fmi3Status {
+    fn set_int16(&mut self, _vr: u32, _value: i16) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int32(&mut self, _vr: u32, _value: &mut [i32]) -> Fmi3Status {
+    fn get_int32(&mut self, _vr: u32, _value: &mut i32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int32(&mut self, _vr: u32, _value: &[i32]) -> Fmi3Status {
+    fn set_int32(&mut self, _vr: u32, _value: i32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int64(&mut self, _vr: u32, _value: &mut [i64]) -> Fmi3Status {
+    fn get_int64(&mut self, _vr: u32, _value: &mut i64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int64(&mut self, _vr: u32, _value: &[i64]) -> Fmi3Status {
+    fn set_int64(&mut self, _vr: u32, _value: i64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint8(&mut self, _vr: u32, _value: &mut [u8]) -> Fmi3Status {
+    fn get_uint8(&mut self, _vr: u32, _value: &mut u8) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint8(&mut self, _vr: u32, _value: &[u8]) -> Fmi3Status {
+    fn set_uint8(&mut self, _vr: u32, _value: u8) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint16(&mut self, _vr: u32, _value: &mut [u16]) -> Fmi3Status {
+    fn get_uint16(&mut self, _vr: u32, _value: &mut u16) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint16(&mut self, _vr: u32, _value: &[u16]) -> Fmi3Status {
+    fn set_uint16(&mut self, _vr: u32, _value: u16) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint32(&mut self, _vr: u32, _value: &mut [u32]) -> Fmi3Status {
+    fn get_uint32(&mut self, _vr: u32, _value: &mut u32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint32(&mut self, _vr: u32, _value: &[u32]) -> Fmi3Status {
+    fn set_uint32(&mut self, _vr: u32, _value: u32) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint64(&mut self, _vr: u32, _value: &mut [u64]) -> Fmi3Status {
+    fn get_uint64(&mut self, _vr: u32, _value: &mut u64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint64(&mut self, _vr: u32, _value: &[u64]) -> Fmi3Status {
+    fn set_uint64(&mut self, _vr: u32, _value: u64) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_boolean(&mut self, _vr: u32, _value: &mut [Fmi3Bool]) -> Fmi3Status {
+    fn get_boolean(&mut self, _vr: u32, _value: &mut Fmi3Bool) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_boolean(&mut self, _vr: u32, _value: &[Fmi3Bool]) -> Fmi3Status {
+    fn set_boolean(&mut self, _vr: u32, _value: Fmi3Bool) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_string(&mut self, _vr: u32, _value: &mut [Fmi3Str]) -> Fmi3Status {
+    fn get_string(&mut self, _vr: u32, _value: &mut Fmi3Str) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_string(&mut self, _vr: u32, _value: &[Fmi3Str]) -> Fmi3Status {
+    fn set_string(&mut self, _vr: u32, _value: Fmi3Str) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_binary(&mut self, _vr: u32, _value: &mut [u8]) -> Fmi3Status {
+    fn get_binary(&mut self, _vr: u32, _value: &mut *mut [u8]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
@@ -259,7 +259,7 @@ pub trait Fmi3: Sized {
         Fmi3Status::ERROR
     }
 
-    fn get_clock(&mut self, _vr: u32, _value: &mut [Fmi3Bool]) -> Fmi3Status {
+    fn get_clock(&mut self, _vr: u32, _value: &mut Fmi3Bool) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
@@ -440,7 +440,294 @@ pub trait Fmi3: Sized {
 
 #[macro_export]
 macro_rules! generate_fmi3_ffi {
-    ($t: ty) => {};
+    ($t: ty) => {
+        use std::ffi::c_char;
+        use std::slice::{from_raw_parts, from_raw_parts_mut};
+
+        // -- TRAIT BOUND CHECK --
+        const _: () = {
+            const fn assert_impl<T: Fmi3>() {}
+            assert_impl::<$t>();
+        };
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetVersion() -> *const c_char {
+            c"3.0".as_ptr() as *const c_char
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3InstantiateModelExchange(
+            instance_name: Fmi3Str,
+            instantiation_token: Fmi3Str,
+            resource_path: Fmi3Str,
+            visible: Fmi3Bool,
+            logging_on: Fmi3Bool,
+            instance_environment: *mut c_void,
+            log_message: *const extern "C" fn(
+                instance_environment: *mut c_void,
+                status: Fmi3Status,
+                category: Fmi3Str,
+                message: Fmi3Str,
+            ),
+        ) -> *mut c_void {
+            let Some(instance) = <$t>::instantiate_model_exchange(
+                instance_name,
+                instantiation_token,
+                resource_path,
+                visible,
+                logging_on,
+                instance_environment,
+                log_message,
+            ) else {
+                return std::ptr::null_mut();
+            };
+            Box::into_raw(Box::new(instance)) as *mut c_void
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
+            instance_name: Fmi3Str,
+            instantiation_token: Fmi3Str,
+            resource_path: Fmi3Str,
+            visible: Fmi3Bool,
+            logging_on: Fmi3Bool,
+            event_mode_used: Fmi3Bool,
+            early_return_allowed: Fmi3Bool,
+            required_intermediate_variables: *const u32,
+            n_required_intermediate_variables: usize,
+            instance_environment: *mut c_void,
+            log_message: *const extern "C" fn(
+                instance_environment: *mut c_void,
+                status: Fmi3Status,
+                category: Fmi3Str,
+                message: Fmi3Str,
+            ),
+            intermediate_update: *const extern "C" fn(instance_enivronment: *mut c_void),
+        ) -> *mut c_void {
+            if required_intermediate_variables.is_null() {
+                return std::ptr::null_mut();
+            }
+            let rivs = unsafe {
+                from_raw_parts(
+                    required_intermediate_variables,
+                    n_required_intermediate_variables,
+                )
+            };
+            let Some(instance) = <$t>::instantiate_co_simulation(
+                instance_name,
+                instantiation_token,
+                resource_path,
+                visible,
+                logging_on,
+                event_mode_used,
+                early_return_allowed,
+                rivs,
+                instance_environment,
+                log_message,
+                intermediate_update,
+            ) else {
+                return std::ptr::null_mut();
+            };
+            Box::into_raw(Box::new(instance)) as *mut c_void
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3InstantiateScheduledExecution(
+            instance_name: Fmi3Str,
+            instantiation_token: Fmi3Str,
+            resource_path: Fmi3Str,
+            visible: Fmi3Bool,
+            logging_on: Fmi3Bool,
+            instance_environment: *mut c_void,
+            log_message: *const extern "C" fn(
+                instance_environment: *mut c_void,
+                status: Fmi3Status,
+                category: Fmi3Str,
+                message: Fmi3Str,
+            ),
+            lock_preemption: *const extern "C" fn() -> *mut c_void,
+            unlock_preemption: *const extern "C" fn() -> *mut c_void,
+        ) -> *mut c_void {
+            let Some(instance) = <$t>::instantiate_scheduled_execution(
+                instance_name,
+                instantiation_token,
+                resource_path,
+                visible,
+                logging_on,
+                instance_environment,
+                log_message,
+                lock_preemption,
+                unlock_preemption,
+            ) else {
+                return std::ptr::null_mut();
+            };
+            Box::into_raw(Box::new(instance)) as *mut c_void
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3FreeInstance(fmu: *mut $t) {
+            if !fmu.is_null() {
+                let _ = unsafe { Box::from_raw(fmu) };
+            }
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetDebugLogging(
+            fmu: *mut $t,
+            logging_on: Fmi3Bool,
+            n_categories: usize,
+            categories: *const Fmi3Str,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if categories.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let categories = unsafe { from_raw_parts(categories, n_categories) };
+            fmu.set_debug_logging(logging_on, categories)
+        }
+
+        macro_rules! no_arg_ffi_fcn {
+            ($get_fn:ident, $trait_fn:ident) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(fmu: *mut $t) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    fmu.$trait_fn()
+                }
+            };
+        }
+
+        no_arg_ffi_fcn!(fmi3EnterConfigurationMode, enter_configuration_mode);
+        no_arg_ffi_fcn!(fmi3ExitConfigurationMode, exit_configuration_mode);
+        no_arg_ffi_fcn!(fmi3ExitInitializationMode, exit_initialization_mode);
+        no_arg_ffi_fcn!(fmi3Terminate, terminate);
+        no_arg_ffi_fcn!(fmi3Reset, reset);
+        no_arg_ffi_fcn!(fmi3EnterStepMode, enter_step_mode);
+        no_arg_ffi_fcn!(fmi3EnterContinuousTimeMode, enter_continuous_time_mode);
+        no_arg_ffi_fcn!(fmi3EnterEventMode, enter_event_mode);
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3EnterInitializationMode(
+            fmu: *mut $t,
+            tolerance_defined: Fmi3Bool,
+            tolerance: f64,
+            start_time: f64,
+            stop_time_defined: Fmi3Bool,
+            stop_time: f64,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.enter_initialization_mode(
+                tolerance_defined,
+                tolerance,
+                start_time,
+                stop_time_defined,
+                stop_time,
+            )
+        }
+
+        macro_rules! get_set_slices_ffi_fcns {
+            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident, $t_val:ty) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(
+                    fmu: *mut $t,
+                    vrs: *const u32,
+                    nvrs: usize,
+                    values: *mut $t_val,
+                    nvals: usize,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    if vrs.is_null() || values.is_null() {
+                        return Fmi3Status::FATAL;
+                    }
+                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                    let values = unsafe { from_raw_parts_mut(values, nvals) };
+                    for vr in vrs {
+                        let status = fmu.$trait_get(*vr, &mut values[*vr as usize]);
+                        if status != Fmi3Status::OK {
+                            return status;
+                        }
+                    }
+                    Fmi3Status::OK
+                }
+
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $set_fn(
+                    fmu: *mut $t,
+                    vrs: *const u32,
+                    nvrs: usize,
+                    values: *const $t_val,
+                    nvals: usize,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    if vrs.is_null() || values.is_null() {
+                        return Fmi3Status::FATAL;
+                    }
+                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                    let values = unsafe { from_raw_parts(values, nvals) };
+                    for vr in vrs {
+                        let status = fmu.$trait_set(*vr, values[*vr as usize]);
+                        if status != Fmi3Status::OK {
+                            return status;
+                        }
+                    }
+                    Fmi3Status::OK
+                }
+            };
+        }
+
+        get_set_slices_ffi_fcns!(
+            fmi3GetFloat32,
+            fmi3SetFloat32,
+            get_float32,
+            set_float32,
+            f32
+        );
+        get_set_slices_ffi_fcns!(
+            fmi3GetFloat64,
+            fmi3SetFloat64,
+            get_float64,
+            set_float64,
+            f64
+        );
+        get_set_slices_ffi_fcns!(fmi3GetInt8, fmi3SetInt8, get_int8, set_int8, i8);
+        get_set_slices_ffi_fcns!(fmi3GetInt16, fmi3SetInt16, get_int16, set_int16, i16);
+        get_set_slices_ffi_fcns!(fmi3GetInt32, fmi3SetInt32, get_int32, set_int32, i32);
+        get_set_slices_ffi_fcns!(fmi3GetInt64, fmi3SetInt64, get_int64, set_int64, i64);
+        get_set_slices_ffi_fcns!(fmi3GetUInt8, fmi3SetUInt8, get_uint8, set_uint8, u8);
+        get_set_slices_ffi_fcns!(fmi3GetUInt16, fmi3SetUInt16, get_uint16, set_uint16, u16);
+        get_set_slices_ffi_fcns!(fmi3GetUInt32, fmi3SetUInt32, get_uint32, set_uint32, u32);
+        get_set_slices_ffi_fcns!(fmi3GetUInt64, fmi3SetUInt64, get_uint64, set_uint64, u64);
+        get_set_slices_ffi_fcns!(
+            fmi3GetBoolean,
+            fmi3SetBoolean,
+            get_boolean,
+            set_boolean,
+            Fmi3Bool
+        );
+        get_set_slices_ffi_fcns!(
+            fmi3GetString,
+            fmi3SetString,
+            get_string,
+            set_string,
+            Fmi3Str
+        );
+        get_set_slices_ffi_fcns!(fmi3GetClocks, fmi3SetClocks, get_clock, set_clock, Fmi3Bool);
+        // TODO: Binary
+    };
 }
 
 #[cfg(test)]
@@ -483,367 +770,8 @@ macro_rules! generate_fmi3_ffi {
         use std::iter::zip;
         use std::slice::{from_raw_parts, from_raw_parts_mut};
 
-        // -- TRAIT BOUND CHECK --
-        const _: () = {
-            const fn assert_impl<T: FMI3>() {}
-            assert_impl::<$t>();
-        };
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3GetVersion() -> *const c_char {
-            c"3.0".as_ptr() as *const c_char
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3InstantiateModelExchange(
-            instance_name: *const c_char,
-            instantiation_token: *const c_char,
-            resource_path: *const c_char,
-            visible: u8,
-            logging_on: u8,
-            instance_environment: *mut c_void,
-            log_message: *const extern "C" fn(
-                instance_environment: *mut c_void,
-                status: i32,
-                category: *const c_char,
-                message: *const c_char,
-            ),
-        ) -> *mut c_void {
-            let Some(instance_name) = instance_name.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(instantiation_token) = instantiation_token.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(resource_path) = resource_path.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(visible) = visible.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(logging_on) = logging_on.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(instance) = <$t>::instantiate_model_exchange(
-                instance_name,
-                instantiation_token,
-                resource_path,
-                visible,
-                logging_on,
-                instance_environment,
-                log_message,
-            ) else {
-                return std::ptr::null_mut();
-            };
-            Box::into_raw(Box::new(instance)) as *mut c_void
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3InstantiateCoSimulation(
-            instance_name: *const c_char,
-            instantiation_token: *const c_char,
-            resource_path: *const c_char,
-            visible: u8,
-            logging_on: u8,
-            event_mode_used: u8,
-            early_return_allowed: u8,
-            required_intermediate_variables: *const u32,
-            n_required_intermediate_variables: usize,
-            instance_environment: *mut c_void,
-            log_message: *const extern "C" fn(
-                instance_environment: *mut c_void,
-                status: i32,
-                category: *const c_char,
-                message: *const c_char,
-            ),
-            intermediate_update: *const extern "C" fn(
-                instance_enivronment: *mut c_void,
-            ),
-        ) -> *mut c_void {
-            let Some(instance_name) = instance_name.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(instantiation_token) = instantiation_token.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(resource_path) = resource_path.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(visible) = visible.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(logging_on) = logging_on.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(event_mode_used) = event_mode_used.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(early_return_allowed) = early_return_allowed.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let rivs = unsafe {
-                 from_raw_parts(
-                     required_intermediate_variables,
-                     n_required_intermediate_variables,
-                 )
-            };
-            let Some(instance) = <$t>::instantiate_co_simulation(
-                instance_name,
-                instantiation_token,
-                resource_path,
-                visible,
-                logging_on,
-                event_mode_used,
-                early_return_allowed,
-                rivs,
-                instance_environment,
-                log_message,
-                intermediate_update,
-            ) else {
-                return std::ptr::null_mut();
-            };
-            Box::into_raw(Box::new(instance)) as *mut c_void
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3InstantiateScheduledExecution(
-            instance_name: *const c_char,
-            instantiation_token: *const c_char,
-            resource_path: *const c_char,
-            visible: u8,
-            logging_on: u8,
-            instance_environment: *mut c_void,
-            log_message: *const extern "C" fn(
-                instance_environment: *mut c_void,
-                status: i32,
-                category: *const c_char,
-                message: *const c_char,
-            ),
-            lock_preemption: *const extern "C" fn() -> *mut c_void,
-            unlock_preemption: *const extern "C" fn() -> *mut c_void,
-        ) -> *mut c_void {
-            let Some(instance_name) = instance_name.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(instantiation_token) = instantiation_token.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(resource_path) = resource_path.to_str() else {
-                return std::ptr::null_mut();
-            };
-            let Some(visible) = visible.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(logging_on) = logging_on.to_bool() else {
-                return std::ptr::null_mut();
-            };
-            let Some(instance) = <$t>::instantiate_scheduled_execution(
-                instance_name,
-                instantiation_token,
-                resource_path,
-                visible,
-                logging_on,
-                instance_environment,
-                log_message,
-                lock_preemption,
-                unlock_preemption,
-            ) else {
-                return std::ptr::null_mut();
-            };
-            Box::into_raw(Box::new(instance)) as *mut c_void
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3FreeInstance(fmu: *mut $t) {
-            if !fmu.is_null() {
-                let _ = unsafe { Box::from_raw(fmu) };
-            }
-        }
-
-        // -- LOGGING & DEBUG --
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SetDebugLogging(
-            fmu: *mut $t,
-            logging_on: u8,
-            n_categories: usize,
-            categories: *const *const c_char,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            let Some(logging_on) = logging_on.to_bool() else {
-                return Status::Fatal;
-            };
-            let mut cats = Vec::with_capacity(n_categories);
-            let cat_ptrs = unsafe { from_raw_parts(categories, n_categories) };
-            for &p in cat_ptrs {
-                match p.to_str() {
-                    Some(s) => cats.push(s),
-                    None => return Status::Fatal,
-                }
-            }
-            fmu.set_debug_logging(logging_on, cats)
-        }
-
-        macro_rules! generate_no_arg_fcn {
-            ($get_fn:ident, $trait_fn:ident) => {
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $get_fn(
-                    fmu: *mut $t,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    fmu.$trait_fn()
-                }
-            }
-        }
-
-        generate_no_arg_fcn!(fmi3EnterConfigurationMode, enter_configuration_mode);
-        generate_no_arg_fcn!(fmi3ExitConfigurationMode, exit_configuration_mode);
-        generate_no_arg_fcn!(fmi3ExitInitializationMode, exit_initialization_mode);
-        generate_no_arg_fcn!(fmi3Terminate, terminate);
-        generate_no_arg_fcn!(fmi3Reset, reset);
-        generate_no_arg_fcn!(fmi3EnterStepMode, enter_step_mode);
-        generate_no_arg_fcn!(fmi3EnterContinuousTimeMode, enter_continuous_time_mode);
-        generate_no_arg_fcn!(fmi3EnterEventMode, enter_event_mode);
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3EnterInitializationMode(
-            fmu: *mut $t,
-            tolerance_defined: u8,
-            tolerance: f64,
-            start_time: f64,
-            stop_time_defined: u8,
-            stop_time: f64,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            let Some(tolerance_defined) = tolerance_defined.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(stop_time_defined) = stop_time_defined.to_bool() else {
-                return Status::Fatal;
-            };
-            fmu.enter_initialization_mode(
-                tolerance_defined,
-                tolerance,
-                start_time,
-                stop_time_defined,
-                stop_time,
-            )
-        }
-
-        macro_rules! generate_get_set {
-            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident, $t_val:ty, $to_rust: expr) => {
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $get_fn(
-                    fmu: *mut $t,
-                    vrs: *const u32,
-                    nvrs: usize,
-                    values: *mut $t_val,
-                    nvals: usize,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Status::Fatal
-                    }
-                    // TODO: Different to FMI2. Could these be different lengths?
-                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-                    let values = unsafe { from_raw_parts_mut(values, nvals) };
-                    for (vr, value) in zip(vrs, values) {
-                        let status = fmu.$trait_get(*vr, value);
-                        if status != Status::Ok {
-                            return status;
-                        }
-                    }
-                    Status::Ok
-                }
-
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $set_fn(
-                    fmu: *mut $t,
-                    vrs: *const u32,
-                    nvrs: usize,
-                    values: *const $t_val,
-                    nvals: usize,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Status::Fatal
-                    }
-                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-                    let values = unsafe { from_raw_parts(values, nvals) };
-                    for (vr, value) in std::iter::zip(vrs, values) {
-                        let rv = $to_rust(value);
-                        let status = fmu.$trait_set(*vr, rv);
-                        if status != Status::Ok {
-                            return status;
-                        }
-                    }
-                    Status::Ok
-                }
-            };
-        }
 
 
-        generate_get_set!(
-            fmi3GetFloat32,
-            fmi3SetFloat32,
-            get_float32,
-            set_float32,
-            f32,
-            |v: *const f32| unsafe { *v }
-        );
-        generate_get_set!(
-            fmi3GetFloat64,
-            fmi3SetFloat64,
-            get_float64,
-            set_float64,
-            f64,
-            |v: *const f64| unsafe { *v }
-        );
-
-        generate_get_set!(fmi3GetInt8, fmi3SetInt8, get_int8, set_int8, i8, |v: *const i8| unsafe { *v });
-        generate_get_set!(fmi3GetInt16, fmi3SetInt16, get_int16, set_int16, i16, |v: *const i16| unsafe { *v });
-        generate_get_set!(fmi3GetInt32, fmi3SetInt32, get_int32, set_int32, i32, |v: *const i32| unsafe { *v });
-        generate_get_set!(fmi3GetInt64, fmi3SetInt64, get_int64, set_int64, i64, |v: *const i64| unsafe { *v });
-        generate_get_set!(fmi3GetUInt8, fmi3SetUInt8, get_uint8, set_uint8, u8, |v: *const u8| unsafe { *v });
-        generate_get_set!(fmi3GetUInt16, fmi3SetUInt16, get_uint16, set_uint16, u16, |v: *const u16| unsafe { *v });
-        generate_get_set!(fmi3GetUInt32, fmi3SetUInt32, get_uint32, set_uint32, u32, |v: *const u32| unsafe { *v });
-        generate_get_set!(fmi3GetUInt64, fmi3SetUInt64, get_uint64, set_uint64, u64, |v: *const u64| unsafe { *v });
-
-
-        generate_get_set!(
-            fmi3GetBoolean,
-            fmi3SetBoolean,
-            get_boolean,
-            set_boolean,
-            u8,
-            // OPTION: Put error when it is not 1 or 0?
-            |v: *const u8| unsafe { *v != 0 }
-        );
-        generate_get_set!(
-            fmi3GetString,
-            fmi3SetString,
-            get_string,
-            set_string,
-            *const c_char,
-            |v: *const *const c_char| {
-                let v = unsafe { *v };
-                v.to_str().unwrap_or("")
-            }
-        );
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3GetBinary(
