@@ -251,7 +251,7 @@ pub trait Fmi3: Sized {
         Fmi3Status::ERROR
     }
 
-    fn get_binary(&mut self, _vr: u32, _value: &mut *mut [u8]) -> Fmi3Status {
+    fn get_binary(&mut self, _vr: u32, _size: &mut usize, _value: &mut *const u8) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
@@ -726,7 +726,305 @@ macro_rules! generate_fmi3_ffi {
             Fmi3Str
         );
         get_set_slices_ffi_fcns!(fmi3GetClocks, fmi3SetClocks, get_clock, set_clock, Fmi3Bool);
-        // TODO: Binary
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetBinary(
+            fmu: *mut $t,
+            vrs: *const u32,
+            nvrs: usize,
+            sizes: *mut usize,
+            values: *mut *const u8,
+            nvals: usize,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if vrs.is_null() || sizes.is_null() || values.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+            let sizes = unsafe { from_raw_parts_mut(sizes, nvals) };
+            let values = unsafe { from_raw_parts_mut(values, nvals) };
+            for vr in vrs {
+                let idx = *vr as usize;
+                let mut size = sizes[idx];
+                let mut value = values[idx];
+                let status = fmu.get_binary(*vr, &mut size, &mut value);
+                if status != Fmi3Status::OK {
+                    return status;
+                }
+            }
+            Fmi3Status::OK
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetBinary(
+            fmu: *mut $t,
+            vrs: *const u32,
+            nvrs: usize,
+            sizes: *const usize,
+            values: *const *const u8,
+            nvals: usize,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if vrs.is_null() || sizes.is_null() || values.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+            let sizes = unsafe { from_raw_parts(sizes, nvals) };
+            let values = unsafe { from_raw_parts(values, nvals) };
+            for vr in vrs {
+                let idx = *vr as usize;
+                let size = sizes[idx];
+                let start = values[idx];
+                let binary = unsafe { from_raw_parts(start, size) };
+                let status = fmu.set_binary(*vr, &binary);
+                if status != Fmi3Status::OK {
+                    return status;
+                }
+            }
+            Fmi3Status::OK
+        }
+
+        macro_rules! fmi2_slice_fcns {
+            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident, $t_val:ty) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(
+                    fmu: *mut $t,
+                    vrs: *const u32,
+                    nvr: usize,
+                    values: *mut $t_val,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    if vrs.is_null() || values.is_null() {
+                        return Fmi3Status::FATAL;
+                    }
+                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                    let values = unsafe { from_raw_parts_mut(values, nvr) };
+                    for (vr, value) in std::iter::zip(vrs, values) {
+                        let status = fmu.$trait_get(*vr, value);
+                        if status != Fmi3Status::OK {
+                            return status;
+                        }
+                    }
+                    Fmi3Status::OK
+                }
+
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $set_fn(
+                    fmu: *mut $t,
+                    vrs: *const u32,
+                    nvr: usize,
+                    values: *const $t_val,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                    let values = unsafe { from_raw_parts(values, nvr) };
+                    for (vr, value) in std::iter::zip(vrs, values) {
+                        let status = fmu.$trait_set(*vr, *value);
+                        if status != Fmi3Status::OK {
+                            return status;
+                        }
+                    }
+                    Fmi3Status::OK
+                }
+            };
+        }
+
+        fmi2_slice_fcns!(
+            fmi3GetIntervalDecimal,
+            fmi3SetIntervalDecimal,
+            get_interval_decimal,
+            set_interval_decimal,
+            f64
+        );
+        fmi2_slice_fcns!(
+            fmi3GetIntervalFraction,
+            fmi3SetIntervalFraction,
+            get_interval_fraction,
+            set_interval_fraction,
+            f64
+        );
+        fmi2_slice_fcns!(
+            fmi3GetShiftDecimal,
+            fmi3SetShiftDecimal,
+            get_shift_decimal,
+            set_shift_decimal,
+            f64
+        );
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetShiftFraction(
+            fmu: *mut $t,
+            vrs: *const u32,
+            n: usize,
+            counters: *mut u64,
+            resolutions: *mut u64,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, n) };
+            let counters = unsafe { from_raw_parts_mut(counters, n) };
+            let resolutions = unsafe { from_raw_parts_mut(resolutions, n) };
+            for vr in vrs {
+                let idx = *vr as usize;
+                let status = fmu.get_shift_fraction(*vr, &mut counters[idx], &mut resolutions[idx]);
+                if status != Fmi3Status::OK {
+                    return status;
+                }
+            }
+            Fmi3Status::OK
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetShiftFraction(
+            fmu: *mut $t,
+            vrs: *const u32,
+            n: usize,
+            counters: *const u64,
+            resolutions: *const u64,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let vrs = unsafe { from_raw_parts(vrs, n) };
+            let counters = unsafe { from_raw_parts(counters, n) };
+            let resolutions = unsafe { from_raw_parts(resolutions, n) };
+            for vr in vrs {
+                let idx = *vr as usize;
+                let status = fmu.set_shift_fraction(*vr, counters[idx], resolutions[idx]);
+                if status != Fmi3Status::OK {
+                    return status;
+                }
+            }
+            Fmi3Status::OK
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SerializedFMUstateSize(
+            fmu: *mut $t,
+            state: *mut c_void,
+            size: *mut usize,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            let size = match unsafe { size.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.serialized_fmu_state_size(state, size)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SerializeFMUstate(
+            fmu: *mut $t,
+            state: *mut c_void,
+            serialized_state: *mut u8, // fmi2Byte is u8
+            size: usize,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            if serialized_state.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let buffer = unsafe { from_raw_parts_mut(serialized_state, size) };
+            fmu.serialize_fmu_state(state, buffer)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3DeSerializeFMUstate(
+            fmu: *mut $t,
+            serialized_state: *const u8, // fmi2Byte is u8
+            size: usize,
+            state: *mut *mut c_void,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            if serialized_state.is_null() {
+                return Fmi3Status::FATAL;
+            }
+            let buffer = unsafe { std::slice::from_raw_parts(serialized_state, size) };
+            fmu.deserialized_fmu_state(buffer, size, state)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetFMUstate(
+            fmu: *mut $t,
+            state: *mut *mut c_void,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.get_fmu_state(state)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetFMUstate(fmu: *mut $t, state: *mut c_void) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.set_fmu_state(state)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3FreeFMUstate(fmu: *mut $t, state: *mut c_void) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let state = match unsafe { state.as_mut() } {
+                Some(s) => s,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.free_fmu_state(state)
+        }
     };
 }
 
@@ -771,296 +1069,8 @@ macro_rules! generate_fmi3_ffi {
         use std::slice::{from_raw_parts, from_raw_parts_mut};
 
 
-
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3GetBinary(
-            fmu: *mut $t,
-            vrs: *const u32,
-            nvrs: usize,
-            sizes: *mut usize,
-            values: *mut *const u8,
-            nvals: usize,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if vrs.is_null() || sizes.is_null() || values.is_null() {
-                return Status::Fatal;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-            let sizes = unsafe { from_raw_parts_mut(sizes, nvals) };
-            let values = unsafe { from_raw_parts_mut(values, nvals) };
-            for ((vr, size), value) in zip(zip(vrs, sizes), values) {
-                let status = fmu.get_binary(*vr, size, value);
-                if status != Status::Ok {
-                    return status;
-                }
-            }
-            Status::Ok
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SetBinary(
-            fmu: *mut $t,
-            vrs: *const u32,
-            nvrs: usize,
-            sizes: *const usize,
-            values: *const u8,
-            nvals: usize,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if vrs.is_null() || sizes.is_null() || values.is_null() {
-                return Status::Fatal;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-            let sizes = unsafe { from_raw_parts(sizes, nvals) };
-            let values = unsafe { from_raw_parts(values, nvals) };
-            for ((vr, size), value) in zip(zip(vrs, sizes), values) {
-                let slice = unsafe { from_raw_parts(value, *size) };
-                let status = fmu.set_binary(*vr, slice);
-                if status != Status::Ok {
-                    return status;
-                }
-            }
-            Status::Ok
-        }
-
-
-        // -- CLOCKS --
-        generate_get_set!(
-            fmi3GetClock,
-            fmi3SetClock,
-            get_clock,
-            set_clock,
-            i32,
-            // OPTION: Put error when it is not 1 or 0?
-            |v: *const i32| unsafe { *v != 0 }
-        );
-
-        macro_rules! generate_get_set_fmi2_format {
-            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident, $t_val:ty,  $to_rust:expr) => {
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $get_fn(
-                    fmu: *mut $t,
-                    vrs: *const u32,
-                    nvr: usize,
-                    values: *mut $t_val,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Status::Fatal;
-                    }
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts_mut(values, nvr) };
-                    for (vr, value) in zip(vrs, values) {
-                        let status = fmu.$trait_get(*vr, value);
-                        if status != Status::Ok {
-                            return status;
-                        }
-                    }
-                    Status::Ok
-                }
-
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $set_fn(
-                    fmu: *mut $t,
-                    vrs: *const u32,
-                    nvr: usize,
-                    values: *const $t_val,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts(values, nvr) };
-                    for (vr, value) in std::iter::zip(vrs, values) {
-                        let rv  = $to_rust(value);
-                        let status = fmu.$trait_set(*vr, rv);
-                        if status != Status::Ok {
-                            return status;
-                        }
-                    }
-                    Status::Ok
-                }
-            };
-        }
-
-
-        generate_get_set_fmi2_format!(
-            fmi3GetIntervalDecimal,
-            fmi3SetIntervalDecimal,
-            get_interval_decimal,
-            set_interval_decimal,
-            f64,
-            |v: *const f64| unsafe { *v }
-        );
-
-        generate_get_set_fmi2_format!(
-            fmi3GetIntervalFraction,
-            fmi3SetIntervalFraction,
-            get_interval_fraction,
-            set_interval_fraction,
-            f64,
-            |v: *const f64| unsafe { *v }
-        );
-
-        generate_get_set_fmi2_format!(
-            fmi3GetShiftDecimal,
-            fmi3SetShiftDecimal,
-            get_shift_decimal,
-            set_shift_decimal,
-            f64,
-            |v: *const f64| unsafe { *v }
-        );
-
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3GetShiftFraction(
-            fmu: *mut $t,
-            vrs: *const u32,
-            n: usize,
-            counters: *mut u64,
-            resolutions: *mut u64
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
-                return Status::Fatal;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, n) };
-            let counters = unsafe { from_raw_parts_mut(counters, n) };
-            let resolutions = unsafe { from_raw_parts_mut(resolutions, n) };
-            for ((vr, counter), resolution) in zip(zip(vrs, counters), resolutions) {
-                let status = fmu.get_shift_fraction(*vr, counter, resolution);
-                if status != Status::Ok {
-                    return status;
-                }
-            }
-            Status::Ok
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SetShiftFraction(
-            fmu: *mut $t,
-            vrs: *const u32,
-            n: usize,
-            counters: *const u64,
-            resolutions: *const u64
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
-                return Status::Fatal;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, n) };
-            let counters = unsafe { from_raw_parts(counters, n) };
-            let resolutions = unsafe { from_raw_parts(resolutions, n) };
-            for ((vr, counter), resolution) in zip(zip(vrs, counters), resolutions) {
-                let status = fmu.set_shift_fraction(*vr, *counter, *resolution);
-                if status != Status::Ok {
-                    return status;
-                }
-            }
-            Status::Ok
-        }
-
-
-
         // -- STATE MANAGEMENT --
 
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SerializedFMUstateSize(
-            fmu: *mut $t,
-            state: *mut c_void,
-            size: *mut usize,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            fmu.serialized_fmu_state_size(state, size)
-        }
-
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SerializeFMUstate(
-            fmu: *mut $t,
-            state: *mut c_void,
-            serialized_state: *mut u8, // fmi2Byte is u8
-            size: usize,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if state.is_null() || serialized_state.is_null() {
-                return Status::Fatal;
-            }
-            let buffer = unsafe { from_raw_parts_mut(serialized_state, size) };
-            fmu.serialize_fmu_state(state, buffer)
-        }
-
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3DeSerializeFMUstate(
-            fmu: *mut $t,
-            serialized_state: *const u8, // fmi2Byte is u8
-            size: usize,
-            state: *mut *mut c_void,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if state.is_null() || serialized_state.is_null() {
-                return Status::Fatal;
-            }
-            let buffer = unsafe { std::slice::from_raw_parts(serialized_state, size) };
-            fmu.deserialized_fmu_state(buffer, size, state)
-        }
-
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3GetFMUstate(
-            fmu: *mut $t,
-            state: *mut *mut c_void,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if state.is_null() {
-                return Status::Fatal;
-            }
-            fmu.get_fmu_state(state)
-        }
-
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SetFMUstate(fmu: *mut $t, state: *mut c_void) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if state.is_null() {
-                return Status::Fatal;
-            }
-            fmu.set_fmu_state(state)
-        }
 
         /// # Safety
         #[unsafe(no_mangle)]
