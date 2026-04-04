@@ -55,13 +55,8 @@ impl Fmi2Str {
     }
 }
 
-pub type Fmi2Real = f64;
-pub type Fmi2Int = i32;
-pub type Fmi2Uint = u32;
-pub type Fmi2Byte = u8;
-
 #[repr(C)]
-pub struct CallbackFunctions {
+pub struct Fmi2CallbackFunctions {
     /// Pointer to the logger function for reporting messages to the master.
     pub logger: extern "C" fn(
         component_environment: *mut c_void,
@@ -89,7 +84,7 @@ pub struct EventInfo {
     pub nominals_of_continuous_states_changed: Fmi2Bool,
     pub values_of_continuous_states_changed: Fmi2Bool,
     pub next_event_time_defined: Fmi2Bool,
-    pub next_event_time: Fmi2Real,
+    pub next_event_time: f64,
 }
 
 /// Implementing the trait enables the struct to conform
@@ -102,7 +97,7 @@ pub trait Fmi2: Sized {
         fmu_type: Fmi2Type,
         guid: Fmi2Str,
         resource_location: Fmi2Str,
-        functions: *const CallbackFunctions,
+        functions: &Fmi2CallbackFunctions,
         visible: Fmi2Bool,
         logging_on: Fmi2Bool,
     ) -> Self;
@@ -111,34 +106,34 @@ pub trait Fmi2: Sized {
     /// during a simulation step.
     fn do_step(
         &mut self,
-        _current_communication_point: Fmi2Real,
-        _communication_step_size: Fmi2Real,
+        _current_communication_point: f64,
+        _communication_step_size: f64,
         _no_set_fmu_state_prior_to_current_point: Fmi2Bool,
     ) -> Fmi2Status {
         Fmi2Status::OK
     }
 
-    /// The simulation requests the Fmi2Real associated with
+    /// The simulation requests the f64 associated with
     /// the value reference declared in the .xml file.
-    fn get_real(&mut self, _vr: Fmi2Uint, _value: &mut Fmi2Real) -> Fmi2Status {
+    fn get_real(&mut self, _vr: u32, _value: &mut f64) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
-    /// The simulation requests the Fmi2Real associated with
+    /// The simulation requests the f64 associated with
     /// the value reference declared in the .xml file.
-    fn get_integer(&mut self, _vr: Fmi2Uint, _value: &mut Fmi2Int) -> Fmi2Status {
+    fn get_integer(&mut self, _vr: u32, _value: &mut i32) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
-    /// The simulation requests the bool (Fmi2Int) associated with
+    /// The simulation requests the bool (i32) associated with
     /// the value reference declared in the .xml file.
-    fn get_boolean(&mut self, _vr: Fmi2Uint, _value: &mut Fmi2Bool) -> Fmi2Status {
+    fn get_boolean(&mut self, _vr: u32, _value: &mut Fmi2Bool) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
     /// The simulation requests the ptr to the string associated with
     /// the value reference declared in the .xml file.
-    fn get_string(&mut self, _vr: Fmi2Uint, _value: &mut Fmi2Str) -> Fmi2Status {
+    fn get_string(&mut self, _vr: u32, _value: &mut Fmi2Str) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
@@ -147,10 +142,10 @@ pub trait Fmi2: Sized {
     fn setup_experiment(
         &mut self,
         _tolerance_defined: Fmi2Bool,
-        _tolerance: Fmi2Real,
-        _start_time: Fmi2Real,
+        _tolerance: f64,
+        _start_time: f64,
         _stop_time_defined: Fmi2Bool,
-        _stop_time: Fmi2Real,
+        _stop_time: f64,
     ) -> Fmi2Status {
         Fmi2Status::OK
     }
@@ -180,24 +175,24 @@ pub trait Fmi2: Sized {
         Fmi2Status::OK
     }
 
-    /// Sets a given Fmi2Real value reference in the FMU.
-    fn set_real(&mut self, _vr: Fmi2Uint, _value: Fmi2Real) -> Fmi2Status {
+    /// Sets a given f64 value reference in the FMU.
+    fn set_real(&mut self, _vr: u32, _value: f64) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
-    /// Sets a given Fmi2Int value reference in the FMU.
-    fn set_integer(&mut self, _vr: Fmi2Uint, _value: Fmi2Int) -> Fmi2Status {
+    /// Sets a given i32 value reference in the FMU.
+    fn set_integer(&mut self, _vr: u32, _value: i32) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
     /// Sets a given bool value reference in the FMU.
-    fn set_boolean(&mut self, _vr: Fmi2Uint, _value: Fmi2Bool) -> Fmi2Status {
+    fn set_boolean(&mut self, _vr: u32, _value: Fmi2Bool) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
     /// Sets a given string value reference in the FMU. The FMU should
     /// take a copy.
-    fn set_string(&mut self, _vr: Fmi2Uint, _value: Fmi2Str) -> Fmi2Status {
+    fn set_string(&mut self, _vr: u32, _value: Fmi2Str) -> Fmi2Status {
         Fmi2Status::OK
     }
 
@@ -206,21 +201,13 @@ pub trait Fmi2: Sized {
         Fmi2Status::OK
     }
 
-    /// [Co-Simulation only] Queries status of a specific Fmi2Real value.
-    fn get_real_status(
-        &mut self,
-        _status_type: Fmi2StatusType,
-        _value: &mut Fmi2Real,
-    ) -> Fmi2Status {
+    /// [Co-Simulation only] Queries status of a specific f64 value.
+    fn get_real_status(&mut self, _status_type: Fmi2StatusType, _value: &mut f64) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Co-Simulation only] Queries status of a specific Integer value.
-    fn get_integer_status(
-        &mut self,
-        _status_type: Fmi2StatusType,
-        _value: &mut Fmi2Int,
-    ) -> Fmi2Status {
+    fn get_integer_status(&mut self, _status_type: Fmi2StatusType, _value: &mut i32) -> Fmi2Status {
         Fmi2Status::OK
     }
 
@@ -248,40 +235,27 @@ pub trait Fmi2: Sized {
     }
 
     /// Sets the n-th derivative of a real input.
-    fn set_real_input_derivative(
-        &self,
-        _vr: Fmi2Uint,
-        _order: Fmi2Int,
-        _value: Fmi2Real,
-    ) -> Fmi2Status {
+    fn set_real_input_derivative(&self, _vr: u32, _order: i32, _value: f64) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// Gets the n-th derivative of a real output.
     fn get_real_output_derivative(
         &mut self,
-        _vr: Fmi2Uint,
-        _order: &Fmi2Int,
-        _value: &mut Fmi2Real,
+        _vr: u32,
+        _order: &i32,
+        _value: &mut f64,
     ) -> Fmi2Status {
         Fmi2Status::ERROR
     }
 
     /// Returns the required buffer size for the serialized state.
-    fn serialized_fmu_state_size(
-        &mut self,
-        _state: &mut std::ffi::c_void,
-        _size: &mut usize,
-    ) -> Fmi2Status {
+    fn serialized_fmu_state_size(&mut self, _state: &mut c_void, _size: &mut usize) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// Serializes the FMU state into a byte buffer.
-    fn serialize_fmu_state(
-        &mut self,
-        _state: &mut std::ffi::c_void,
-        _serialized_state: &[u8],
-    ) -> Fmi2Status {
+    fn serialize_fmu_state(&mut self, _state: &mut c_void, _serialized_state: &[u8]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
@@ -290,7 +264,7 @@ pub trait Fmi2: Sized {
         &mut self,
         _buffer: &[u8],
         _size: usize,
-        _state: &mut *mut std::ffi::c_void,
+        _state: &mut *mut c_void,
     ) -> Fmi2Status {
         Fmi2Status::OK
     }
@@ -313,10 +287,10 @@ pub trait Fmi2: Sized {
     /// Computes partial derivatives (directional derivatives).
     fn get_directional_derivative(
         &mut self,
-        _v_known: &[Fmi2Uint],
-        _v_unknown: &[Fmi2Uint],
-        _dv_known: &[Fmi2Real],
-        _dv_unknown: &mut [Fmi2Real],
+        _v_known: &[u32],
+        _v_unknown: &[u32],
+        _dv_known: &[f64],
+        _dv_unknown: &mut [f64],
     ) -> Fmi2Status {
         Fmi2Status::OK
     }
@@ -339,52 +313,52 @@ pub trait Fmi2: Sized {
     /// [Model Exchange only] Notifies the FMU that the integrator step is complete.
     fn completed_integrator_step(
         &mut self,
-        _no_prior: Fmi2Int,
-        _enter_event: &mut Fmi2Int,
-        _term: &mut Fmi2Int,
+        _no_prior: i32,
+        _enter_event: &mut i32,
+        _term: &mut i32,
     ) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Sets a new time point.
-    fn set_time(&mut self, _time: Fmi2Real) -> Fmi2Status {
+    fn set_time(&mut self, _time: f64) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Sets new continuous state values.
-    fn set_continuous_states(&mut self, _x: &[Fmi2Real]) -> Fmi2Status {
+    fn set_continuous_states(&mut self, _x: &[f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
-    fn set_derivatives(&mut self, _dx: &[Fmi2Real]) -> Fmi2Status {
+    fn set_derivatives(&mut self, _dx: &[f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
-    fn set_event_indicators(&mut self, _ei: &[Fmi2Real]) -> Fmi2Status {
+    fn set_event_indicators(&mut self, _ei: &[f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
-    fn set_nominals_of_continuous_states(&mut self, _x: &[Fmi2Real]) -> Fmi2Status {
+    fn set_nominals_of_continuous_states(&mut self, _x: &[f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Retrieves the state derivatives.
-    fn get_derivatives(&mut self, _dx: &mut [Fmi2Real]) -> Fmi2Status {
+    fn get_derivatives(&mut self, _dx: &mut [f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Retrieves the event indicators (zero-crossing functions).
-    fn get_event_indicators(&mut self, _ei: &mut [Fmi2Real]) -> Fmi2Status {
+    fn get_event_indicators(&mut self, _ei: &mut [f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Retrieves current continuous states.
-    fn get_continuous_states(&mut self, _x: &mut [Fmi2Real]) -> Fmi2Status {
+    fn get_continuous_states(&mut self, _x: &mut [f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 
     /// [Model Exchange only] Retrieves nominal values of continuous states for scaling.
-    fn get_nominals_of_continuous_states(&mut self, _x: &mut [Fmi2Real]) -> Fmi2Status {
+    fn get_nominals_of_continuous_states(&mut self, _x: &mut [f64]) -> Fmi2Status {
         Fmi2Status::OK
     }
 }
@@ -425,13 +399,14 @@ macro_rules! generate_fmi2_ffi {
             fmu_type: Fmi2Type,
             guid: Fmi2Str,
             resource_location: Fmi2Str,
-            functions: *const CallbackFunctions,
+            functions: *const Fmi2CallbackFunctions,
             visible: Fmi2Bool,
             logging_on: Fmi2Bool,
         ) -> *mut c_void {
-            if functions.is_null() {
-                return std::ptr::null_mut();
-            }
+            let functions = match unsafe { functions.as_ref() } {
+                Some(f) => f,
+                None => return std::ptr::null_mut(),
+            };
             let instance = <$t>::instantiate(
                 instance_name,
                 fmu_type,
@@ -449,8 +424,8 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2DoStep(
             fmu: *mut $t,
-            current_communication_point: Fmi2Real,
-            communication_step_size: Fmi2Real,
+            current_communication_point: f64,
+            communication_step_size: f64,
             no_set_fmu_state_prior_to_current_point: Fmi2Bool,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
@@ -477,10 +452,10 @@ macro_rules! generate_fmi2_ffi {
         pub unsafe extern "C" fn fmi2SetupExperiment(
             fmu: *mut $t,
             tolerance_defined: Fmi2Bool,
-            tolerance: Fmi2Real,
-            start_time: Fmi2Real,
+            tolerance: f64,
+            start_time: f64,
             stop_time_defined: Fmi2Bool,
-            stop_time: Fmi2Real,
+            stop_time: f64,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
@@ -540,7 +515,7 @@ macro_rules! generate_fmi2_ffi {
                 #[unsafe(no_mangle)]
                 pub unsafe extern "C" fn $get_fn(
                     fmu: *mut $t,
-                    vrs: *const Fmi2Uint,
+                    vrs: *const u32,
                     nvr: usize,
                     values: *mut $t_val,
                 ) -> Fmi2Status {
@@ -591,10 +566,10 @@ macro_rules! generate_fmi2_ffi {
             fmi2SetInteger,
             get_integer,
             set_integer,
-            Fmi2Int
+            i32
         );
 
-        generate_get_set!(fmi2GetReal, fmi2SetReal, get_real, set_real, Fmi2Real);
+        generate_get_set!(fmi2GetReal, fmi2SetReal, get_real, set_real, f64);
 
         generate_get_set!(
             fmi2GetBoolean,
@@ -634,8 +609,8 @@ macro_rules! generate_fmi2_ffi {
         }
 
         generate_get_status_fcn!(fmi2GetStatus, get_status, Fmi2Status);
-        generate_get_status_fcn!(fmi2GetRealStatus, get_real_status, Fmi2Real);
-        generate_get_status_fcn!(fmi2GetIntegerStatus, get_integer_status, Fmi2Int);
+        generate_get_status_fcn!(fmi2GetRealStatus, get_real_status, f64);
+        generate_get_status_fcn!(fmi2GetIntegerStatus, get_integer_status, i32);
         generate_get_status_fcn!(fmi2GetBooleanStatus, get_boolean_status, Fmi2Bool);
         generate_get_status_fcn!(fmi2GetStringStatus, get_string_status, Fmi2Str);
 
@@ -643,10 +618,10 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2SetRealInputDerivatives(
             fmu: *mut $t,
-            vr: *const Fmi2Uint,
+            vr: *const u32,
             nvr: usize,
-            order: *const Fmi2Int,
-            value: *const Fmi2Real,
+            order: *const i32,
+            value: *const f64,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
@@ -671,10 +646,10 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetRealOutputDerivatives(
             fmu: *mut $t,
-            vr: *const Fmi2Uint,
+            vr: *const u32,
             nvr: usize,
-            order: *const Fmi2Int,
-            value: *mut Fmi2Real,
+            order: *const i32,
+            value: *mut f64,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
@@ -722,7 +697,7 @@ macro_rules! generate_fmi2_ffi {
         pub unsafe extern "C" fn fmi2SerializeFMUstate(
             fmu: *mut $t,
             state: *mut c_void,
-            serialized_state: *mut Fmi2Byte,
+            serialized_state: *mut u8,
             size: usize,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
@@ -741,7 +716,7 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2DeSerializeFMUstate(
             fmu: *mut $t,
-            serialized_state: *const Fmi2Byte,
+            serialized_state: *const u8,
             size: usize,
             state: *mut *mut c_void,
         ) -> Fmi2Status {
@@ -806,12 +781,12 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2GetDirectionalDerivative(
             fmu: *mut $t,
-            v_unknown_ptr: *const Fmi2Uint,
+            v_unknown_ptr: *const u32,
             n_unknown: usize,
-            v_known_ptr: *const Fmi2Uint,
+            v_known_ptr: *const u32,
             n_known: usize,
-            dv_known_ptr: *const Fmi2Real,
-            dv_unknown_mut_ptr: *mut Fmi2Real,
+            dv_known_ptr: *const f64,
+            dv_unknown_mut_ptr: *mut f64,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
@@ -852,9 +827,9 @@ macro_rules! generate_fmi2_ffi {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi2CompletedIntegratorStep(
             fmu: *mut $t,
-            no_prior: Fmi2Int,
-            enter_event: *mut Fmi2Int,
-            term: *mut Fmi2Int,
+            no_prior: i32,
+            enter_event: *mut i32,
+            term: *mut i32,
         ) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
@@ -873,7 +848,7 @@ macro_rules! generate_fmi2_ffi {
 
         /// # Safety
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi2SetTime(fmu: *mut $t, time: Fmi2Real) -> Fmi2Status {
+        pub unsafe extern "C" fn fmi2SetTime(fmu: *mut $t, time: f64) -> Fmi2Status {
             let fmu = match unsafe { fmu.as_mut() } {
                 Some(f) => f,
                 None => return Fmi2Status::FATAL,
@@ -923,7 +898,7 @@ macro_rules! generate_fmi2_ffi {
             get_continuous_states,
             fmi2SetContinuousStates,
             set_continuous_states,
-            Fmi2Real
+            f64
         );
 
         generate_slice_fcns!(
@@ -931,7 +906,7 @@ macro_rules! generate_fmi2_ffi {
             get_derivatives,
             fmi2SetDerivatives,
             set_derivatives,
-            Fmi2Real
+            f64
         );
 
         generate_slice_fcns!(
@@ -939,7 +914,7 @@ macro_rules! generate_fmi2_ffi {
             get_event_indicators,
             fmi2SetEventIndicators,
             set_event_indicators,
-            Fmi2Real
+            f64
         );
 
         generate_slice_fcns!(
@@ -947,7 +922,7 @@ macro_rules! generate_fmi2_ffi {
             get_nominals_of_continuous_states,
             fmi2SetNominalsOfContinuousStates,
             set_nominals_of_continuous_states,
-            Fmi2Real
+            f64
         );
     };
 }
@@ -958,7 +933,7 @@ mod cargo_check {
     // Usesd to get type checking on the macro.
     #[derive(Default)]
     pub struct Fmu {
-        count: Fmi2Real,
+        count: f64,
     }
     impl Fmi2 for Fmu {
         fn instantiate(
@@ -975,15 +950,15 @@ mod cargo_check {
 
         fn do_step(
             &mut self,
-            _current_communication_point: Fmi2Real,
-            communication_step_size: Fmi2Real,
+            _current_communication_point: f64,
+            communication_step_size: f64,
             _no_set_fmu_state_prior_to_current_point: Fmi2Bool,
         ) -> Fmi2Status {
             self.count += communication_step_size;
             Fmi2Status::OK
         }
 
-        fn get_real(&mut self, vr: Fmi2Uint, value: &mut Fmi2Real) -> Fmi2Status {
+        fn get_real(&mut self, vr: u32, value: &mut f64) -> Fmi2Status {
             match vr {
                 0 => *value = self.count,
                 _ => return Fmi2Status::ERROR,

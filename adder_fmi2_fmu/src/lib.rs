@@ -2,8 +2,8 @@ use fmi_rs::{fmi2::*, generate_fmi2_ffi};
 
 #[derive(Default)]
 pub struct Add {
-    a: Fmi2Real,
-    b: Fmi2Real,
+    a: f64,
+    b: f64,
 }
 
 impl Fmi2 for Add {
@@ -12,14 +12,14 @@ impl Fmi2 for Add {
         _fmu_type: Fmi2Type,
         _guid: Fmi2Str,
         _resource_location: Fmi2Str,
-        _functions: *const CallbackFunctions,
+        _functions: &Fmi2CallbackFunctions,
         _visible: Fmi2Bool,
         _logging_on: Fmi2Bool,
     ) -> Self {
         Self::default()
     }
 
-    fn get_real(&mut self, vr: Fmi2Uint, value: &mut Fmi2Real) -> Fmi2Status {
+    fn get_real(&mut self, vr: u32, value: &mut f64) -> Fmi2Status {
         match vr {
             0 => *value = self.a,
             1 => *value = self.b,
@@ -29,7 +29,7 @@ impl Fmi2 for Add {
         Fmi2Status::OK
     }
 
-    fn set_real(&mut self, vr: Fmi2Uint, value: Fmi2Real) -> Fmi2Status {
+    fn set_real(&mut self, vr: u32, value: f64) -> Fmi2Status {
         match vr {
             0 => self.a = value,
             1 => self.b = value,

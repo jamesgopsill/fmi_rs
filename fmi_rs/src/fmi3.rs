@@ -1,116 +1,96 @@
 #![allow(clippy::too_many_arguments)]
+use std::ffi::{CStr, c_char, c_void};
 
-use std::ffi::{c_char, c_void};
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Fmi3Status(i32);
 
-/// Represents the status returned by FMI functions.
-#[repr(i32)]
-#[derive(PartialEq, Eq)]
-pub enum Status {
-    /// All well.
-    Ok = 0,
-    /// Things are not quite right, but the computation can continue.
-    Warning = 1,
-    /// The FMU decided to skip this step.
-    Discard = 2,
-    /// An error occurred that can be recovered from.
-    Error = 3,
-    /// A global error occurred; the simulation cannot continue.
-    Fatal = 4,
+impl Fmi3Status {
+    pub const OK: Self = Self(0);
+    pub const WARNING: Self = Self(1);
+    pub const DISCARD: Self = Self(2);
+    pub const ERROR: Self = Self(3);
+    pub const FATAL: Self = Self(4);
 }
 
-impl TryFrom<i32> for Status {
-    type Error = ();
-    fn try_from(value: i32) -> Result<Self, ()> {
-        match value {
-            0 => Ok(Self::Ok),
-            1 => Ok(Self::Warning),
-            2 => Ok(Self::Discard),
-            3 => Ok(Self::Error),
-            4 => Ok(Self::Fatal),
-            _ => Err(()),
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Fmi3DependencyKind(i32);
+
+impl Fmi3DependencyKind {
+    pub const INDEPENDENT: Self = Self(0);
+    pub const CONSTANT: Self = Self(1);
+    pub const FIXED: Self = Self(2);
+    pub const TUNABLE: Self = Self(3);
+    pub const DISCRETE: Self = Self(4);
+    pub const DEPENDENT: Self = Self(4);
+}
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct Fmi3IntervalQualifier(i32);
+
+impl Fmi3DependencyKind {
+    pub const INTERVAL_NOT_YET_KNOWN: Self = Self(0);
+    pub const INTERVAL_UNCHANGED: Self = Self(1);
+    pub const INTERVAL_CHANGED: Self = Self(2);
+}
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub struct Fmi3Bool(u8);
+
+impl Fmi3Bool {
+    pub const FALSE: Self = Self(0);
+    pub const TRUE: Self = Self(1);
+}
+
+#[repr(transparent)]
+#[derive(Debug, Clone, Copy)]
+pub struct Fmi3Str(*const c_char);
+
+impl Fmi3Str {
+    pub fn to_str(&self) -> Result<&CStr, Fmi3Status> {
+        if self.0.is_null() {
+            return Err(Fmi3Status::FATAL);
         }
+        Ok(unsafe { CStr::from_ptr(self.0) })
     }
 }
 
-#[repr(i32)]
-#[derive(PartialEq, Eq)]
-pub enum DependencyKind {
-    Independent = 0,
-    Constant = 1,
-    Fixed = 2,
-    Tunable = 3,
-    Discrete = 4,
-    Dependent = 5,
-}
-
-impl TryFrom<i32> for DependencyKind {
-    type Error = Status;
-    fn try_from(value: i32) -> Result<Self, Status> {
-        match value {
-            0 => Ok(Self::Independent),
-            1 => Ok(Self::Constant),
-            2 => Ok(Self::Fixed),
-            3 => Ok(Self::Tunable),
-            4 => Ok(Self::Discrete),
-            5 => Ok(Self::Dependent),
-            _ => Err(Status::Fatal),
-        }
-    }
-}
-
-#[repr(i32)]
-#[derive(PartialEq, Eq)]
-pub enum IntervalQualifier {
-    IntervalNotYetKnown = 0,
-    IntervalUnchanged = 1,
-    IntervalChanged = 2,
-}
-
-impl TryFrom<i32> for IntervalQualifier {
-    type Error = Status;
-    fn try_from(value: i32) -> Result<Self, Status> {
-        match value {
-            0 => Ok(Self::IntervalNotYetKnown),
-            1 => Ok(Self::IntervalUnchanged),
-            2 => Ok(Self::IntervalChanged),
-            _ => Err(Status::Fatal),
-        }
-    }
-}
-
-pub trait FMI3: Sized {
+pub trait Fmi3: Sized {
     fn instantiate_model_exchange(
-        _instance_name: &str,
-        _instantiation_token: &str,
-        _resource_path: &str,
-        _visible: bool,
-        _logging_on: bool,
+        _instance_name: Fmi3Str,
+        _instantiation_token: Fmi3Str,
+        _resource_path: Fmi3Str,
+        _visible: Fmi3Bool,
+        _logging_on: Fmi3Bool,
         _instance_environment: *mut c_void,
         _log_message: *const extern "C" fn(
             instance_environment: *mut c_void,
-            status: i32,
-            category: *const c_char,
-            message: *const c_char,
+            status: Fmi3Status,
+            category: Fmi3Str,
+            message: Fmi3Str,
         ),
     ) -> Option<Self> {
         None
     }
 
     fn instantiate_co_simulation(
-        _instance_name: &str,
-        _instantiation_token: &str,
-        _resource_path: &str,
-        _visible: bool,
-        _logging_on: bool,
-        _event_mode_used: bool,
-        _early_return_allowed: bool,
+        _instance_name: Fmi3Str,
+        _instantiation_token: Fmi3Str,
+        _resource_path: Fmi3Str,
+        _visible: Fmi3Bool,
+        _logging_on: Fmi3Bool,
+        _event_mode_used: Fmi3Bool,
+        _early_return_allowed: Fmi3Bool,
         _intermediate_variables: &[u32],
         _instance_environment: *mut c_void,
         _log_message: *const extern "C" fn(
             instance_environment: *mut c_void,
-            status: i32,
-            category: *const c_char,
-            message: *const c_char,
+            status: Fmi3Status,
+            category: Fmi3Str,
+            message: Fmi3Str,
         ),
         _intermediate_update: *const extern "C" fn(instance_enivronment: *mut c_void),
     ) -> Option<Self> {
@@ -118,17 +98,17 @@ pub trait FMI3: Sized {
     }
 
     fn instantiate_scheduled_execution(
-        _instance_name: &str,
-        _instantiation_token: &str,
-        _resource_path: &str,
-        _visible: bool,
-        _logging_on: bool,
+        _instance_name: Fmi3Str,
+        _instantiation_token: Fmi3Str,
+        _resource_path: Fmi3Str,
+        _visible: Fmi3Bool,
+        _logging_on: Fmi3Bool,
         _instance_environment: *mut c_void,
         _log_message: *const extern "C" fn(
             instance_environment: *mut c_void,
-            status: i32,
-            category: *const c_char,
-            message: *const c_char,
+            status: Fmi3Status,
+            category: Fmi3Str,
+            message: Fmi3Str,
         ),
         _lock_preemption: *const extern "C" fn() -> *mut c_void,
         _unlock_preemption: *const extern "C" fn() -> *mut c_void,
@@ -136,295 +116,283 @@ pub trait FMI3: Sized {
         None
     }
 
-    fn set_debug_logging(&mut self, _logging_on: bool, _categories: Vec<&str>) -> Status {
-        Status::Ok
+    fn set_debug_logging(&mut self, _logging_on: Fmi3Bool, _categories: &[Fmi3Str]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn enter_configuration_mode(&mut self) -> Status {
-        Status::Ok
+    fn enter_configuration_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn exit_configuration_mode(&mut self) -> Status {
-        Status::Ok
+    fn exit_configuration_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
     fn enter_initialization_mode(
         &mut self,
-        _tolerance_defined: bool,
+        _tolerance_defined: Fmi3Bool,
         _tolerance: f64,
         _start_time: f64,
-        _stop_time_defined: bool,
+        _stop_time_defined: Fmi3Bool,
         _stop_time: f64,
-    ) -> Status {
-        Status::Ok
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn exit_initialization_mode(&mut self) -> Status {
-        Status::Ok
+    fn exit_initialization_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn enter_event_mode(&mut self) -> Status {
-        Status::Ok
+    fn enter_event_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn terminate(&mut self) -> Status {
-        Status::Ok
+    fn terminate(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn reset(&mut self) -> Status {
-        Status::Ok
+    fn reset(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_float64(&mut self, _vr: u32, _value: &mut f64) -> Status {
-        Status::Error
+    fn get_float64(&mut self, _vr: u32, _value: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_float64(&mut self, _vr: u32, _value: f64) -> Status {
-        Status::Error
+    fn set_float64(&mut self, _vr: u32, _value: &[f64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_float32(&mut self, _vr: u32, _value: &mut f32) -> Status {
-        Status::Error
+    fn get_float32(&mut self, _vr: u32, _value: &mut &[f32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_float32(&mut self, _vr: u32, _value: f32) -> Status {
-        Status::Error
+    fn set_float32(&mut self, _vr: u32, _value: &[f32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_int8(&mut self, _vr: u32, _value: &mut i8) -> Status {
-        Status::Error
+    fn get_int8(&mut self, _vr: u32, _value: &mut [i8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_int8(&mut self, _vr: u32, _value: i8) -> Status {
-        Status::Error
+    fn set_int8(&mut self, _vr: u32, _value: &[i8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_int16(&mut self, _vr: u32, _value: &mut i16) -> Status {
-        Status::Error
+    fn get_int16(&mut self, _vr: u32, _value: &mut [i16]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_int16(&mut self, _vr: u32, _value: i16) -> Status {
-        Status::Error
+    fn set_int16(&mut self, _vr: u32, _value: &[i16]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_int32(&mut self, _vr: u32, _value: &mut i32) -> Status {
-        Status::Error
+    fn get_int32(&mut self, _vr: u32, _value: &mut [i32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_int32(&mut self, _vr: u32, _value: i32) -> Status {
-        Status::Error
+    fn set_int32(&mut self, _vr: u32, _value: &[i32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_int64(&mut self, _vr: u32, _value: &mut i64) -> Status {
-        Status::Error
+    fn get_int64(&mut self, _vr: u32, _value: &mut [i64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_int64(&mut self, _vr: u32, _value: i64) -> Status {
-        Status::Error
+    fn set_int64(&mut self, _vr: u32, _value: &[i64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_uint8(&mut self, _vr: u32, _value: &mut u8) -> Status {
-        Status::Error
+    fn get_uint8(&mut self, _vr: u32, _value: &mut [u8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_uint8(&mut self, _vr: u32, _value: u8) -> Status {
-        Status::Error
+    fn set_uint8(&mut self, _vr: u32, _value: &[u8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_uint16(&mut self, _vr: u32, _value: &mut u16) -> Status {
-        Status::Error
+    fn get_uint16(&mut self, _vr: u32, _value: &mut [u16]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_uint16(&mut self, _vr: u32, _value: u16) -> Status {
-        Status::Error
+    fn set_uint16(&mut self, _vr: u32, _value: &[u16]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_uint32(&mut self, _vr: u32, _value: &mut u32) -> Status {
-        Status::Error
+    fn get_uint32(&mut self, _vr: u32, _value: &mut [u32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_uint32(&mut self, _vr: u32, _value: u32) -> Status {
-        Status::Error
+    fn set_uint32(&mut self, _vr: u32, _value: &[u32]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_uint64(&mut self, _vr: u32, _value: &mut u64) -> Status {
-        Status::Error
+    fn get_uint64(&mut self, _vr: u32, _value: &mut [u64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_uint64(&mut self, _vr: u32, _value: u64) -> Status {
-        Status::Error
+    fn set_uint64(&mut self, _vr: u32, _value: &[u64]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_boolean(&mut self, _vr: u32, _value: &mut u8) -> Status {
-        Status::Error
+    fn get_boolean(&mut self, _vr: u32, _value: &mut [Fmi3Bool]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_boolean(&mut self, _vr: u32, _value: bool) -> Status {
-        Status::Error
+    fn set_boolean(&mut self, _vr: u32, _value: &[Fmi3Bool]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_string(&mut self, _vr: u32, _value: &mut *const c_char) -> Status {
-        Status::Error
+    fn get_string(&mut self, _vr: u32, _value: &mut [Fmi3Str]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_string(&mut self, _vr: u32, _value: &str) -> Status {
-        Status::Error
+    fn set_string(&mut self, _vr: u32, _value: &[Fmi3Str]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_binary(&mut self, _vr: u32, _size: &mut usize, _value: &mut *const u8) -> Status {
-        Status::Error
+    fn get_binary(&mut self, _vr: u32, _value: &mut [u8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_binary(&mut self, _vr: u32, _value: &[u8]) -> Status {
-        Status::Error
+    fn set_binary(&mut self, _vr: u32, _value: &[u8]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn get_clock(&mut self, _vr: u32, _value: &mut i32) -> Status {
-        Status::Error
+    fn get_clock(&mut self, _vr: u32, _value: &mut [Fmi3Bool]) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    fn set_clock(&mut self, _vr: u32, _value: bool) -> Status {
-        Status::Error
+    fn set_clock(&mut self, _vr: u32, _value: Fmi3Bool) -> Fmi3Status {
+        Fmi3Status::ERROR
     }
 
-    /// Returns the required buffer size for the serialized state.
-    fn serialized_fmu_state_size(&mut self, _state: *mut c_void, _size: *mut usize) -> Status {
-        Status::Ok
+    fn serialized_fmu_state_size(&mut self, _state: &mut c_void, _size: &mut usize) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Serializes the FMU state into a byte buffer.
-    fn serialize_fmu_state(&mut self, _state: *mut c_void, _serialized_state: &[u8]) -> Status {
-        Status::Ok
+    fn serialize_fmu_state(&mut self, _state: &mut c_void, _serialized_state: &[u8]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Deserializes the FMU state from a byte buffer.
     fn deserialized_fmu_state(
         &mut self,
         _buffer: &[u8],
         _size: usize,
-        _state: *mut *mut c_void,
-    ) -> Status {
-        Status::Ok
+        _state: &mut *mut c_void,
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Sets the internal state of the FMU.
-    fn set_fmu_state(&mut self, _state: *mut c_void) -> Status {
-        Status::Ok
+    fn set_fmu_state(&mut self, _state: &mut c_void) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Captures the internal state of the FMU.
-    fn get_fmu_state(&mut self, _state: *mut *mut c_void) -> Status {
-        Status::Ok
+    fn get_fmu_state(&mut self, _state: &mut *mut c_void) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Frees a previously captured FMU state.
-    fn free_fmu_state(&mut self, _state: *mut c_void) -> Status {
-        Status::Ok
+    fn free_fmu_state(&mut self, _state: &mut c_void) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// Computes partial derivatives (directional derivatives).
     fn get_directional_derivative(
         &mut self,
         _v_known: &[u32],
         _v_unknown: &[u32],
         _dv_known: &[f64],
         _dv_unknown: &mut [f64],
-    ) -> Status {
-        Status::Ok
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
     fn do_step(
         &mut self,
         _current_communication_point: f64,
         _communication_step_size: f64,
-        _no_set_fmu_state_prior: bool,
-        _event_encountered: &mut bool,
-        _terminate: &mut bool,
-        _early_return: &mut bool,
+        _no_set_fmu_state_prior: Fmi3Bool,
+        _event_encountered: &mut Fmi3Bool,
+        _terminate: &mut Fmi3Bool,
+        _early_return: &mut Fmi3Bool,
         _last_successful_time: &mut f64,
-    ) -> Status {
-        Status::Fatal
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn enter_step_mode(&mut self) -> Status {
-        Status::Ok
+    fn enter_step_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_time(&mut self, _time: f64) -> Status {
-        Status::Ok
+    fn set_time(&mut self, _time: f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// [Model Exchange only] Retrieves the state derivatives.
-    fn get_derivatives(&mut self, _dx: &mut [f64]) -> Status {
-        Status::Ok
+    fn get_derivatives(&mut self, _dx: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// [Model Exchange only] Retrieves the state derivatives.
-    fn set_derivatives(&mut self, _dx: &[f64]) -> Status {
-        Status::Ok
+    fn set_derivatives(&mut self, _dx: &[f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// [Model Exchange only] Retrieves the event indicators (zero-crossing functions).
-    fn get_event_indicators(&mut self, _ei: &mut [f64]) -> Status {
-        Status::Ok
+    fn get_event_indicators(&mut self, _ei: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_event_indicators(&mut self, _ei: &[f64]) -> Status {
-        Status::Ok
+    fn set_event_indicators(&mut self, _ei: &[f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// [Model Exchange only] Retrieves current continuous states.
-    fn get_continuous_states(&mut self, _x: &mut [f64]) -> Status {
-        Status::Ok
+    fn get_continuous_states(&mut self, _x: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    /// [Model Exchange only] Sets new continuous state values.
-    fn set_continuous_states(&mut self, _x: &[f64]) -> Status {
-        Status::Ok
+    fn set_continuous_states(&mut self, _x: &[f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_continuous_state_derivatives(&mut self, _x: &mut [f64]) -> Status {
-        Status::Ok
+    fn get_continuous_state_derivatives(&mut self, _x: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_continuous_state_derivatives(&mut self, _x: &[f64]) -> Status {
-        Status::Ok
+    fn set_continuous_state_derivatives(&mut self, _x: &[f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_nominals_of_continuous_states(&mut self, _x: &mut [f64]) -> Status {
-        Status::Ok
+    fn get_nominals_of_continuous_states(&mut self, _x: &mut [f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_nominals_of_continuous_states(&mut self, _x: &[f64]) -> Status {
-        Status::Ok
+    fn set_nominals_of_continuous_states(&mut self, _x: &[f64]) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_interval_decimal(&mut self, _vr: u32, _interval: f64) -> Status {
-        Status::Ok
+    fn set_interval_decimal(&mut self, _vr: u32, _interval: f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_interval_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Status {
-        Status::Ok
+    fn get_interval_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_interval_fraction(&mut self, _vr: u32, _interval: f64) -> Status {
-        Status::Ok
+    fn set_interval_fraction(&mut self, _vr: u32, _interval: f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_interval_fraction(&mut self, _vr: u32, _interval: &mut f64) -> Status {
-        Status::Ok
+    fn get_interval_fraction(&mut self, _vr: u32, _interval: &mut f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_shift_decimal(&mut self, _vr: u32, _interval: f64) -> Status {
-        Status::Ok
+    fn set_shift_decimal(&mut self, _vr: u32, _interval: f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_shift_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Status {
-        Status::Ok
+    fn get_shift_decimal(&mut self, _vr: u32, _interval: &mut f64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn set_shift_fraction(&mut self, _vr: u32, _counter: u64, _resolution: u64) -> Status {
-        Status::Ok
+    fn set_shift_fraction(&mut self, _vr: u32, _counter: u64, _resolution: u64) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
     fn get_shift_fraction(
@@ -432,44 +400,81 @@ pub trait FMI3: Sized {
         _vr: u32,
         _counter: &mut u64,
         _resolution: &mut u64,
-    ) -> Status {
-        Status::Ok
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_number_of_continuous_states(&mut self, _n: &mut usize) -> Status {
-        Status::Ok
+    fn get_number_of_continuous_states(&mut self, _n: &mut usize) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn get_number_of_event_indicators(&mut self, _n: &mut usize) -> Status {
-        Status::Ok
+    fn get_number_of_event_indicators(&mut self, _n: &mut usize) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
-    fn enter_continuous_time_mode(&mut self) -> Status {
-        Status::Ok
+    fn enter_continuous_time_mode(&mut self) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
     fn completed_integrator_step(
         &mut self,
-        _no_set_fmu_state_prior_to_current_point: bool,
-        _enter_event_mode: bool,
-        _terminate_simulation: bool,
-    ) -> Status {
-        Status::Ok
+        _no_set_fmu_state_prior_to_current_point: Fmi3Bool,
+        _enter_event_mode: Fmi3Bool,
+        _terminate_simulation: Fmi3Bool,
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 
     fn update_discrete_states(
         &mut self,
-        _discrete_states_needs_update: &mut bool,
-        _terminate_simulation: &mut bool,
-        _nominals_of_continuous_states_changed: &mut bool,
-        _values_of_continuous_states_changed: &mut bool,
-        _next_event_time_defined: &mut bool,
+        _discrete_states_needs_update: &mut Fmi3Bool,
+        _terminate_simulation: &mut Fmi3Bool,
+        _nominals_of_continuous_states_changed: &mut Fmi3Bool,
+        _values_of_continuous_states_changed: &mut Fmi3Bool,
+        _next_event_time_defined: &mut Fmi3Bool,
         _next_event_time: &mut f64,
-    ) -> Status {
-        Status::Ok
+    ) -> Fmi3Status {
+        Fmi3Status::OK
     }
 }
 
+#[macro_export]
+macro_rules! generate_fmi3_ffi {
+    ($t: ty) => {};
+}
+
+#[cfg(test)]
+mod cargo_check {
+    // Used to get type checking on the macro.
+    use std::ffi::c_void;
+
+    use crate::fmi3::{Fmi3, Fmi3Bool, Fmi3Status, Fmi3Str};
+
+    #[derive(Default)]
+    pub struct Model {}
+
+    impl Fmi3 for Model {
+        fn instantiate_model_exchange(
+            _instance_name: Fmi3Str,
+            _instantiation_token: Fmi3Str,
+            _resource_path: Fmi3Str,
+            _visible: Fmi3Bool,
+            _logging_on: Fmi3Bool,
+            _instance_environment: *mut c_void,
+            _log_message: *const extern "C" fn(
+                instance_environment: *mut c_void,
+                status: Fmi3Status,
+                category: Fmi3Str,
+                message: Fmi3Str,
+            ),
+        ) -> Option<Model> {
+            Some(Self::default())
+        }
+    }
+
+    generate_fmi3_ffi!(Model);
+}
+/*
 #[macro_export]
 macro_rules! generate_fmi3_ffi {
     ($t: ty) => {
@@ -1458,3 +1463,4 @@ mod cargo_check {
     }
     generate_fmi3_ffi!(Model);
 }
+*/
