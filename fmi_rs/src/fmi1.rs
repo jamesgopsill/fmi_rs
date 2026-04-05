@@ -1,6 +1,8 @@
 #![allow(clippy::too_many_arguments)]
 use std::ffi::*;
 
+pub use fmi_rs_macros::Fmi1Ffi;
+
 #[repr(transparent)]
 #[derive(PartialEq, Eq)]
 pub struct Fmi1Status(i32);
@@ -193,10 +195,6 @@ pub trait Fmi1: Sized {
 #[macro_export]
 macro_rules! generate_fmi1_ffi {
     ($t: ty) => {
-        use std::iter::zip;
-        use std::slice::{from_raw_parts, from_raw_parts_mut};
-        // use $crate::fmi1::*;
-
         const _: () = {
             const fn assert_impl<T: Fmi1>() {}
             assert_impl::<$t>();
@@ -299,9 +297,9 @@ macro_rules! generate_fmi1_ffi {
                     if vrs.is_null() || values.is_null() {
                         return Fmi1Status::FATAL;
                     }
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts_mut(values, nvr) };
-                    for (vr, value) in zip(vrs, values) {
+                    let vrs = unsafe { std::slice::from_raw_parts(vrs, nvr) };
+                    let values = unsafe { std::slice::from_raw_parts_mut(values, nvr) };
+                    for (vr, value) in std::iter::zip(vrs, values) {
                         let status = fmu.$trait_get(*vr, value);
                         if status != Fmi1Status::OK {
                             return status;
@@ -321,8 +319,8 @@ macro_rules! generate_fmi1_ffi {
                         Some(f) => f,
                         None => return Fmi1Status::FATAL,
                     };
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts(values, nvr) };
+                    let vrs = unsafe { std::slice::from_raw_parts(vrs, nvr) };
+                    let values = unsafe { std::slice::from_raw_parts(values, nvr) };
                     for (vr, value) in std::iter::zip(vrs, values) {
                         let status = fmu.$trait_set(*vr, *value);
                         if status != Fmi1Status::OK {
@@ -367,9 +365,9 @@ macro_rules! generate_fmi1_ffi {
             if vr.is_null() || order.is_null() || value.is_null() {
                 return Fmi1Status::FATAL;
             }
-            let vrs = unsafe { from_raw_parts(vr, nvr) };
-            let orders = unsafe { from_raw_parts(order, nvr) };
-            let values = unsafe { from_raw_parts_mut(value, nvr) };
+            let vrs = unsafe { std::slice::from_raw_parts(vr, nvr) };
+            let orders = unsafe { std::slice::from_raw_parts(order, nvr) };
+            let values = unsafe { std::slice::from_raw_parts_mut(value, nvr) };
             for i in 0..vrs.len() {
                 let status = fmu.get_real_output_derivative(vrs[i], orders[i], &mut values[i]);
                 if status != Fmi1Status::OK {
@@ -395,9 +393,9 @@ macro_rules! generate_fmi1_ffi {
             if vr.is_null() || order.is_null() || value.is_null() {
                 return Fmi1Status::FATAL;
             }
-            let vrs = unsafe { from_raw_parts(vr, nvr) };
-            let orders = unsafe { from_raw_parts(order, nvr) };
-            let values = unsafe { from_raw_parts(value, nvr) };
+            let vrs = unsafe { std::slice::from_raw_parts(vr, nvr) };
+            let orders = unsafe { std::slice::from_raw_parts(order, nvr) };
+            let values = unsafe { std::slice::from_raw_parts(value, nvr) };
             for i in 0..vrs.len() {
                 let status = fmu.set_real_output_derivative(vrs[i], orders[i], values[i]);
                 if status != Fmi1Status::OK {

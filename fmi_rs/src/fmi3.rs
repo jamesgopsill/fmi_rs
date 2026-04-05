@@ -1,6 +1,8 @@
 #![allow(clippy::too_many_arguments)]
 use std::ffi::{CStr, c_char, c_void};
 
+pub use fmi_rs_macros::Fmi3Ffi;
+
 #[repr(transparent)]
 #[derive(Debug, PartialEq, Eq)]
 pub struct Fmi3Status(i32);
@@ -419,8 +421,8 @@ pub trait Fmi3: Sized {
     fn completed_integrator_step(
         &mut self,
         _no_set_fmu_state_prior_to_current_point: Fmi3Bool,
-        _enter_event_mode: Fmi3Bool,
-        _terminate_simulation: Fmi3Bool,
+        _enter_event_mode: &Fmi3Bool,
+        _terminate_simulation: &Fmi3Bool,
     ) -> Fmi3Status {
         Fmi3Status::OK
     }
@@ -1025,6 +1027,255 @@ macro_rules! generate_fmi3_ffi {
             };
             fmu.free_fmu_state(state)
         }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3GetDirectionalDerivative(
+            fmu: *mut $t,
+            v_unknown_ptr: *const u32,
+            n_unknown: usize,
+            v_known_ptr: *const u32,
+            n_known: usize,
+            dv_known_ptr: *const f64,
+            n_dv_known: usize,
+            dv_unknown_mut_ptr: *mut f64,
+            n_dv_unknown: usize,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            if v_unknown_ptr.is_null()
+                || v_known_ptr.is_null()
+                || dv_known_ptr.is_null()
+                || dv_unknown_mut_ptr.is_null()
+            {
+                return Fmi3Status::FATAL;
+            }
+            let v_unknown = unsafe { from_raw_parts(v_unknown_ptr, n_unknown) };
+            let dv_unknown = unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_dv_unknown) };
+            let v_known = unsafe { from_raw_parts(v_known_ptr, n_known) };
+            let dv_known = unsafe { from_raw_parts(dv_known_ptr, n_dv_known) };
+
+            fmu.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
+        }
+
+        // -- CO-SIMULATION / STEPPING --
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3DoStep(
+            fmu: *mut $t,
+            current_communication_point: f64,
+            communication_step_size: f64,
+            no_set_fmu_state_prior: Fmi3Bool,
+            event_encountered: *mut Fmi3Bool,
+            terminate: *mut Fmi3Bool,
+            early_return: *mut Fmi3Bool,
+            last_successful_time: *mut f64,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let event_encountered = match unsafe { event_encountered.as_mut() } {
+                Some(e) => e,
+                None => return Fmi3Status::FATAL,
+            };
+            let terminate = match unsafe { terminate.as_mut() } {
+                Some(t) => t,
+                None => return Fmi3Status::FATAL,
+            };
+            let early_return = match unsafe { early_return.as_mut() } {
+                Some(e) => e,
+                None => return Fmi3Status::FATAL,
+            };
+            let last_successful_time = match unsafe { last_successful_time.as_mut() } {
+                Some(l) => l,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.do_step(
+                current_communication_point,
+                communication_step_size,
+                no_set_fmu_state_prior,
+                event_encountered,
+                terminate,
+                early_return,
+                last_successful_time,
+            )
+        }
+
+        // -- MODEL EXCHANGE --
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3SetTime(fmu: *mut $t, time: f64) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.set_time(time)
+        }
+
+        macro_rules! get_number_of {
+            ($get_fn:ident, $trait_get:ident) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(fmu: *mut $t, n: *mut usize) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    let n = match unsafe { n.as_mut() } {
+                        Some(n) => n,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    fmu.$trait_get(n)
+                }
+            };
+        }
+
+        get_number_of!(
+            fmi3GetNumberOfContinuousStates,
+            get_number_of_continuous_states
+        );
+
+        get_number_of!(
+            fmi3GetNumberOfEventIndicators,
+            get_number_of_event_indicators
+        );
+
+        macro_rules! get_set_slice {
+            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident) => {
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $get_fn(
+                    fmu: *mut $t,
+                    x: *mut f64,
+                    nx: usize,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    if x.is_null() {
+                        return Fmi3Status::FATAL;
+                    }
+                    let x = unsafe { from_raw_parts_mut(x, nx) };
+                    fmu.$trait_get(x)
+                }
+
+                #[unsafe(no_mangle)]
+                pub unsafe extern "C" fn $set_fn(
+                    fmu: *mut $t,
+                    x: *const f64,
+                    nx: usize,
+                ) -> Fmi3Status {
+                    let fmu = match unsafe { fmu.as_mut() } {
+                        Some(f) => f,
+                        None => return Fmi3Status::FATAL,
+                    };
+                    if x.is_null() {
+                        return Fmi3Status::FATAL;
+                    }
+                    let x = unsafe { from_raw_parts(x, nx) };
+                    fmu.$trait_set(x)
+                }
+            };
+        }
+
+        get_set_slice!(
+            fmi3GetContinuousStates,
+            fmi3SetContinuousStates,
+            get_continuous_states,
+            set_continuous_states
+        );
+
+        get_set_slice!(
+            fmi3GetDerivatives,
+            fmi3SetDerivatives,
+            get_derivatives,
+            set_derivatives
+        );
+
+        get_set_slice!(
+            fmi3GetEventIndicators,
+            fmi3SetEventIndicators,
+            get_event_indicators,
+            set_event_indicators
+        );
+
+        get_set_slice!(
+            fmi3GetContinuousStateDerivatives,
+            fmi3SetContinuousStateDerivatives,
+            get_continuous_state_derivatives,
+            set_continuous_state_derivatives
+        );
+
+        get_set_slice!(
+            fmi3GetNominalsOfContinuousStates,
+            fmi3SetNominalsOfContinuousStates,
+            get_nominals_of_continuous_states,
+            set_nominals_of_continuous_states
+        );
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3CompletedIntegratorStep(
+            fmu: *mut $t,
+            no_set_fmu_state_prior_to_current_point: Fmi3Bool,
+            enter_event_mode: *const Fmi3Bool,
+            terminate_simulation: *const Fmi3Bool,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let e = match unsafe { enter_event_mode.as_ref() } {
+                Some(n) => n,
+                None => return Fmi3Status::FATAL,
+            };
+            let t = match unsafe { terminate_simulation.as_ref() } {
+                Some(t) => t,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.completed_integrator_step(no_set_fmu_state_prior_to_current_point, e, t)
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
+            fmu: *mut $t,
+            discrete_states_needs_update: *mut Fmi3Bool,
+            terminate_simulation: *mut Fmi3Bool,
+            nominals_of_continuous_states_changed: *mut Fmi3Bool,
+            values_of_continuous_states_changed: *mut Fmi3Bool,
+            next_event_time_defined: *mut Fmi3Bool,
+            next_event_time: *mut f64,
+        ) -> Fmi3Status {
+            let fmu = match unsafe { fmu.as_mut() } {
+                Some(f) => f,
+                None => return Fmi3Status::FATAL,
+            };
+            let d = match unsafe { discrete_states_needs_update.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            let t = match unsafe { terminate_simulation.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            let n = match unsafe { nominals_of_continuous_states_changed.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            let v = match unsafe { values_of_continuous_states_changed.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            let nxt = match unsafe { next_event_time_defined.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            let time = match unsafe { next_event_time.as_mut() } {
+                Some(v) => v,
+                None => return Fmi3Status::FATAL,
+            };
+            fmu.update_discrete_states(d, t, n, v, nxt, time)
+        }
     };
 }
 
@@ -1059,346 +1310,3 @@ mod cargo_check {
 
     generate_fmi3_ffi!(Model);
 }
-/*
-#[macro_export]
-macro_rules! generate_fmi3_ffi {
-    ($t: ty) => {
-        use $crate::utils::*;
-        use std::ffi::{c_char, c_void};
-        use std::iter::zip;
-        use std::slice::{from_raw_parts, from_raw_parts_mut};
-
-
-        // -- STATE MANAGEMENT --
-
-
-        /// # Safety
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3FreeFMUstate(
-            fmu: *mut $t,
-            state: *mut c_void,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if state.is_null() {
-                return Status::Fatal;
-            }
-            fmu.free_fmu_state(state)
-        }
-
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3GetDirectionalDerivative(
-            fmu: *mut $t,
-            v_unknown_ptr: *const u32,
-            n_unknown: usize,
-            v_known_ptr: *const u32,
-            n_known: usize,
-            dv_known_ptr: *const f64,
-            n_dv_known: usize,
-            dv_unknown_mut_ptr: *mut f64,
-            n_dv_unknown: usize,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if v_unknown_ptr.is_null()
-                || v_known_ptr.is_null()
-                || dv_known_ptr.is_null()
-                || dv_unknown_mut_ptr.is_null()
-            {
-                return Status::Fatal;
-            }
-            let v_unknown = unsafe { from_raw_parts(v_unknown_ptr, n_unknown) };
-            let dv_unknown = unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_dv_unknown) };
-            let v_known = unsafe { from_raw_parts(v_known_ptr, n_known) };
-            let dv_known = unsafe { from_raw_parts(dv_known_ptr, n_dv_known) };
-
-            fmu.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
-        }
-
-
-
-        // -- CO-SIMULATION / STEPPING --
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3DoStep(
-            fmu: *mut $t,
-            current_communication_point: f64,
-            communication_step_size: f64,
-            no_set_fmu_state_prior: u8,
-            event_encountered: *mut u8,
-            terminate: *mut u8,
-            early_return: *mut u8,
-            last_successful_time: *mut f64,
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            if event_encountered.is_null() || terminate.is_null() || early_return.is_null() {
-                return Status::Fatal;
-            }
-            let Some(no_set_fmu_state_prior) = no_set_fmu_state_prior.to_bool() else {
-                return Status::Fatal;
-            };
-            let last_successful_time = match unsafe { last_successful_time.as_mut() } {
-                Some(l) => l,
-                None => return Status::Fatal,
-            };
-
-            let mut ev = false;
-            let mut term = false;
-            let mut er = false;
-
-            let status = fmu.do_step(
-                current_communication_point,
-                communication_step_size,
-                no_set_fmu_state_prior,
-                &mut ev,
-                &mut term,
-                &mut er,
-                last_successful_time,
-            );
-
-            match (ev) {
-                true => unsafe { *event_encountered = 1 },
-                false => unsafe { *event_encountered = 0}
-            }
-            match (term) {
-                true => unsafe { *terminate = 1 },
-                false => unsafe { *terminate = 0 }
-            }
-            match (er) {
-                true => unsafe { *early_return = 1 },
-                false => unsafe { *early_return = 0 }
-            }
-            status
-        }
-
-
-
-        // -- MODEL EXCHANGE SPECIFIC --
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3SetTime(fmu: *mut $t, time: f64) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            fmu.set_time(time)
-        }
-
-        macro_rules! generate_get_number_of {
-            ($get_fn:ident, $trait_get:ident) => {
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $get_fn(
-                    fmu: *mut $t,
-                    n: *mut usize
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    let n = match unsafe { n.as_mut() } {
-                        Some(n) => n,
-                        None => return Status::Fatal
-                    };
-                    fmu.$trait_get(n)
-                }
-            }
-        }
-
-        generate_get_number_of!(
-            fmi3GetNumberOfContinuousStates,
-            get_number_of_continuous_states
-        );
-
-        generate_get_number_of!(
-            fmi3GetNumberOfEventIndicators,
-            get_number_of_event_indicators
-        );
-
-        macro_rules! generate_get_set_slice {
-            ($get_fn:ident, $set_fn:ident, $trait_get:ident, $trait_set:ident) => {
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $get_fn(
-                    fmu: *mut $t,
-                    x: *mut f64,
-                    nx: usize,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    if x.is_null() {
-                        return Status::Fatal;
-                    }
-                    let x = unsafe { from_raw_parts_mut(x, nx) };
-                    fmu.$trait_get(x)
-                }
-
-                #[unsafe(no_mangle)]
-                pub unsafe extern "C" fn $set_fn(
-                    fmu: *mut $t,
-                    x: *const f64,
-                    nx: usize,
-                ) -> Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Status::Fatal,
-                    };
-                    if x.is_null() {
-                        return Status::Fatal;
-                    }
-                    let x = unsafe { from_raw_parts(x, nx) };
-                    fmu.$trait_set(x)
-                }
-            }
-        }
-
-        generate_get_set_slice!(
-            fmi3GetContinuousStates,
-            fmi3SetContinuousStates,
-            get_continuous_states,
-            set_continuous_states
-        );
-
-        generate_get_set_slice!(
-            fmi3GetDerivatives,
-            fmi3SetDerivatives,
-            get_derivatives,
-            set_derivatives
-        );
-
-        generate_get_set_slice!(
-            fmi3GetEventIndicators,
-            fmi3SetEventIndicators,
-            get_event_indicators,
-            set_event_indicators
-        );
-
-        generate_get_set_slice!(
-            fmi3GetContinuousStateDerivatives,
-            fmi3SetContinuousStateDerivatives,
-            get_continuous_state_derivatives,
-            set_continuous_state_derivatives
-        );
-
-        generate_get_set_slice!(
-            fmi3GetNominalsOfContinuousStates,
-            fmi3SetNominalsOfContinuousStates,
-            get_nominals_of_continuous_states,
-            set_nominals_of_continuous_states
-        );
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3CompletedIntegratorStep(
-            fmu: *mut $t,
-            no_set_fmu_state_prior_to_current_point: *const u8,
-            enter_event_mode: *const u8,
-            terminate_simulation: *const u8
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            let Some(n) = no_set_fmu_state_prior_to_current_point.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(e) = enter_event_mode.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(t) = terminate_simulation.to_bool() else {
-                return Status::Fatal;
-            };
-            fmu.completed_integrator_step(n, e, t)
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn fmi3UpdateDiscreteStates(
-            fmu: *mut $t,
-            discrete_states_needs_update: *mut u8,
-            terminate_simulation: *mut u8,
-            nominals_of_continuous_states_changed: *mut u8,
-            values_of_continuous_states_changed: *mut u8,
-            next_event_time_defined: *mut u8,
-            next_event_time: *mut f64
-        ) -> Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Status::Fatal,
-            };
-            let Some(mut discrete) = discrete_states_needs_update.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(mut terminate) = terminate_simulation.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(mut nominals) = nominals_of_continuous_states_changed.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(mut values) = values_of_continuous_states_changed.to_bool() else {
-                return Status::Fatal;
-            };
-            let Some(mut next) = next_event_time_defined.to_bool() else {
-                return Status::Fatal;
-            };
-            let time = match unsafe { next_event_time.as_mut() } {
-                Some(t) => t,
-                None => return Status::Fatal
-            };
-            let status = fmu.update_discrete_states(&mut discrete, &mut terminate, &mut nominals, &mut values, &mut next, time);
-            match (discrete) {
-                true => unsafe { *discrete_states_needs_update = 1 },
-                false => unsafe { *discrete_states_needs_update = 0 }
-            }
-            match (terminate) {
-                true => unsafe { *terminate_simulation = 1 },
-                false => unsafe { *terminate_simulation = 0 }
-            }
-            match (nominals) {
-                true => unsafe { *nominals_of_continuous_states_changed = 1 },
-                false => unsafe { *nominals_of_continuous_states_changed = 0 }
-            }
-            match (next) {
-                true => unsafe { *next_event_time_defined = 1 },
-                false => unsafe { *next_event_time_defined = 0 }
-            }
-            status
-        }
-    };
-}
-
-#[cfg(test)]
-mod cargo_check {
-    // Usesd to get type checking on the macro.
-    use crate::fmi3::*;
-    #[derive(Default)]
-    pub struct Model {
-        _n: f64,
-    }
-    impl FMI3 for Model {
-        fn instantiate_model_exchange(
-            _instance_name: &str,
-            _instantiation_token: &str,
-            _resource_path: &str,
-            _visible: bool,
-            _logging_on: bool,
-            _instance_environment: *mut std::ffi::c_void,
-            _log_message: *const extern "C" fn(
-                instance_environment: *mut std::ffi::c_void,
-                status: i32,
-                category: *const std::ffi::c_char,
-                message: *const std::ffi::c_char,
-            ),
-        ) -> Option<Model> {
-            Some(Self::default())
-        }
-    }
-    generate_fmi3_ffi!(Model);
-}
-*/

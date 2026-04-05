@@ -1,5 +1,7 @@
 use std::ffi::{CStr, c_char, c_void};
 
+pub use fmi_rs_macros::Fmi2Ffi;
+
 #[repr(transparent)]
 #[derive(Debug, PartialEq, Eq)]
 pub struct Fmi2Status(i32);
@@ -369,7 +371,7 @@ macro_rules! generate_fmi2_ffi {
         use std::ffi::{c_char, c_void};
         use std::iter::zip;
         use std::slice::{from_raw_parts, from_raw_parts_mut};
-        use $crate::fmi2::*;
+        // use $crate::fmi2::*;
 
         // -- TRAIT BOUND CHECK --
         const _: () = {
@@ -941,7 +943,7 @@ mod cargo_check {
             _fmu_type: Fmi2Type,
             _guid: Fmi2Str,
             _resource_location: Fmi2Str,
-            _functions: *const CallbackFunctions,
+            _functions: &Fmi2CallbackFunctions,
             _visible: Fmi2Bool,
             _logging_on: Fmi2Bool,
         ) -> Self {
