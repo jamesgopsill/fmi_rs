@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="3.0"
-  modelName="adder_fmi3"
-  description="Adds two f64s."
-  instantiationToken="{42345678-1234-1234-1234-1234567890ab}"
-  generationTool="fmi_rs (Rust)"
+  modelName="@fmi/adder_fmi3"
+  description=""
+  instantiationToken=""
+  version=""
+  generationDateAndTime=""
+  generationTool="fmi_rs"
   author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">
 
   <ModelExchange
-    modelIdentifier="adder_fmi3"
+    modelIdentifier=""
     hasEventMode="false"
     canGetAndSetFMUState="false"
     canSerializeFMUState="false"/>

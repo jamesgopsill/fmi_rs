@@ -2,14 +2,17 @@
 <fmiModelDescription
   fmiVersion="2.0"
   modelName="@fmu/multiplier"
-  guid="generated_by_build_script"
+  description=""
+  guid=""
+  version=""
+  generationDateAndTime=""
   generationTool="fmi_rs"
   author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">
 
   <CoSimulation
-    modelIdentifier="multiplier"
+    modelIdentifier=""
     canHandleVariableCommunicationStepSize="true"/>
 
   <ModelVariables>

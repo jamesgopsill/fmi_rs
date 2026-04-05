@@ -2,7 +2,10 @@
 <fmiModelDescription
   fmiVersion="2.0"
   modelName="@fmu/counter"
-  guid="generated_by_build_script"
+  description=""
+  guid=""
+  version=""
+  generationDateAndTime=""
   generationTool="fmi_rs"
   author="James Gopsill"
   license="MIT"
@@ -10,7 +13,7 @@
 
   <!-- modelIdentifier is the name of the binary. -->
   <CoSimulation
-    modelIdentifier="counter"
+    modelIdentifier=""
     canHandleVariableCommunicationStepSize="true"/>
 
   <ModelVariables>
