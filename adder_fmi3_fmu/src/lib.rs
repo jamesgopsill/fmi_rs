@@ -1,10 +1,10 @@
 use std::ffi::c_void;
 
-use fmi_rs::{fmi3::*, generate_fmi3_ffi};
+use fmi_rs::fmi3::*;
 
 // TODO.
 
-#[derive(Default)]
+#[derive(Default, Fmi3Ffi)]
 pub struct Add {
     _a: f64,
     _b: f64,
@@ -28,5 +28,3 @@ impl Fmi3 for Add {
         Some(Self::default())
     }
 }
-
-generate_fmi3_ffi!(Add);

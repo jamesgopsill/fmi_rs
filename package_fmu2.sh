@@ -5,6 +5,7 @@ PKG_NAME=$(cargo read-manifest | jq -r '.name')
 
 echo "Building ${PKG_NAME}..."
 
+# Remove old dir if exists
 rm -rf "{$FMU_DIR}"
 mkdir -p "${FMU_DIR}/binaries/win64"
 
@@ -14,8 +15,13 @@ echo "Copying files..."
 cp "../target/x86_64-pc-windows-gnu/release/${PKG_NAME}.dll" "${FMU_DIR}/binaries/win64/"
 cp ./modelDescription.xml "${FMU_DIR}/"
 
-echo "Packaging into fmu..."
+# Creating a new GUID on build
+NEW_GUID="{$(uuidgen)}"
+echo "Build GUID: ${NEW_GUID}"
+sed -i "s/guid=\"[^\"]*\"/guid=\"${NEW_GUID}\"/g" "${FMU_DIR}/modelDescription.xml"
 
+# Packaging
+echo "Packaging into fmu..."
 (cd "${FMU_DIR}" && zip -r "../../target/${PKG_NAME}.fmu" .)
 
 echo "Cleaning up..."

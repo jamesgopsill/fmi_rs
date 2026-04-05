@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="multiplier"
-  guid="{22345678-1234-1234-1234-1234567890ab}"
-  generationTool="Rust"
+  modelName="@fmu/multiplier"
+  guid="generated_by_build_script"
+  generationTool="fmi_rs"
+  author="James Gopsill"
+  license="MIT"
   variableNamingConvention="flat">
 
   <CoSimulation

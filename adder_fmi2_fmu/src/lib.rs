@@ -1,6 +1,6 @@
-use fmi_rs::{fmi2::*, generate_fmi2_ffi};
+use fmi_rs::fmi2::*;
 
-#[derive(Default)]
+#[derive(Default, Fmi2Ffi)]
 pub struct Add {
     a: f64,
     b: f64,
@@ -38,5 +38,3 @@ impl Fmi2 for Add {
         Fmi2Status::OK
     }
 }
-
-generate_fmi2_ffi!(Add);

@@ -1,15 +1,17 @@
-use fmi_rs::{fmi2::Fmi2, generate_fmi2_ffi};
+use fmi_rs::fmi2::*;
 
-#[derive(Default)]
-struct Counter {
+#[derive(Default, Fmi2Ffi)]
+pub struct Counter {
     count: f64,
 }
+
+type Type = Fmi2Str;
 
 impl Fmi2 for Counter {
     fn instantiate(
         _instance_name: Fmi2Str,
         _fmu_type: Fmi2Type,
-        _guid: Fmi2Str,
+        _guid: Type,
         _resource_location: Fmi2Str,
         _functions: &Fmi2CallbackFunctions,
         _visible: Fmi2Bool,
@@ -36,5 +38,3 @@ impl Fmi2 for Counter {
         Fmi2Status::OK
     }
 }
-
-generate_fmi2_ffi!(Counter);

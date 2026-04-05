@@ -1,7 +1,7 @@
-use fmi_rs::{fmi2::*, generate_fmi2_ffi};
+use fmi_rs::fmi2::*;
 
-#[derive(Default)]
-struct Multiplier {
+#[derive(Default, Fmi2Ffi)]
+pub struct Multiplier {
     input: f64,
     multiplier: f64,
     output: f64,
@@ -50,5 +50,3 @@ impl Fmi2 for Multiplier {
         Fmi2Status::OK
     }
 }
-
-generate_fmi2_ffi!(Multiplier);

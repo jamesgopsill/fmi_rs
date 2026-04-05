@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="counter"
-  guid="{12345678-1234-1234-1234-1234567890ab}"
+  modelName="@fmu/counter"
+  guid="generated_by_build_script"
+  generationTool="fmi_rs"
+  author="James Gopsill"
+  license="MIT"
   numberOfEventIndicators="0">
 
+  <!-- modelIdentifier is the name of the binary. -->
   <CoSimulation
     modelIdentifier="counter"
     canHandleVariableCommunicationStepSize="true"/>

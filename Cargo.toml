@@ -2,11 +2,13 @@
 resolver = "2"
 members = [
   "fmi_rs",
+  "fmi_rs_macros",
   "counter_fmu",
   "multiplier_fmu",
   "adder_fmi3_fmu",
-  "adder_fmi2_fmu"
+  "adder_fmi2_fmu",
 ]
 
 [workspace.dependencies]
 fmi_rs = { path = "fmi_rs" }
+fmi_rs_macros = { path = "fmi_rs_macros" }

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="adder_fmi2"
+  modelName="@fmu/adder"
   description="Adds two f64s."
   guid="{32345678-1234-1234-1234-1234567890ab}"
-  generationTool="fmi_rs (Rust)"
+  generationTool="fmi_rs"
   author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">
 
+  <!-- modelIdentifier: Name of the binary. -->
   <ModelExchange
     modelIdentifier="adder_fmi2"
     canGetAndSetFMUState="false"
