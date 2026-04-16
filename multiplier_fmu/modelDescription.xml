@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="@fmu/multiplier"
+  modelName=""
   description=""
   guid=""
   version=""
@@ -10,6 +10,12 @@
   author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">
+
+  <VendorAnnotations>
+    <Tool name="SourceControl">
+      <Repository url="" />
+    </Tool>
+  </VendorAnnotations>
 
   <CoSimulation
     modelIdentifier=""

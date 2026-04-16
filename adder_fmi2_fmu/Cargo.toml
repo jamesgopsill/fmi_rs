@@ -1,5 +1,6 @@
 [package]
 name = "adder_fmi2"
+description = "Add two numbers together."
 version = "0.1.0"
 edition = "2024"
 

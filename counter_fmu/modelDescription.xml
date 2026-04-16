@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Blanks will be populated by pacakage_fmu2.sh -->
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName="@fmu/counter"
+  modelName=""
   description=""
   guid=""
   version=""
@@ -10,6 +11,12 @@
   author="James Gopsill"
   license="MIT"
   numberOfEventIndicators="0">
+
+  <VendorAnnotations>
+    <Tool name="SourceControl">
+      <Repository url="" />
+    </Tool>
+  </VendorAnnotations>
 
   <!-- modelIdentifier is the name of the binary. -->
   <CoSimulation
