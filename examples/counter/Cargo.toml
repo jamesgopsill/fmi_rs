@@ -8,4 +8,4 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-fmi_rs = { workspace = true }
+fmi_rs = { path = "../../fmi_rs" }

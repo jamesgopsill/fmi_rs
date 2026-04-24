@@ -1,0 +1,43 @@
+set -e
+
+cargo build --release --target=x86_64-pc-windows-gnu
+
+FMU_DIR="./target/fmu"
+PKG_NAME=$(cargo read-manifest | jq -r '.name')
+PKG_VERSION=$(cargo read-manifest | jq -r '.version')
+PKG_DESCRIPTION=$(cargo read-manifest | jq -r '.description')
+GIT_REMOTE_URL=$(git remote get-url origin)
+
+echo "Building ${PKG_NAME} from ${GIT_REMOTE_URL} ..."
+
+rm -rf "{$FMU_DIR}"
+mkdir -p "${FMU_DIR}/binaries/x86_64-windows"
+mkdir -p "${FMU_DIR}/documentation"
+
+echo "Copying files..."
+
+# Look up one as in workspace.
+cp "./target/x86_64-pc-windows-gnu/release/${PKG_NAME}.dll" "${FMU_DIR}/binaries/x86_64-windows/"
+cp ./modelDescription.xml "${FMU_DIR}/"
+cp ./README.md "${FMU_DIR}/documentation"
+
+# Creating a new GUID on build
+BUILD_GUID="{$(uuidgen -7)}"
+BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+echo "Build GUID: ${BUILD_GUID}"
+sed -i "s/modelName=\"[^\"]*\"/modelName=\"fmu--${PKG_NAME}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/instantiationToken=\"[^\"]*\"/instantiationToken=\"${BUILD_GUID}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/version=\"[^\"]*\"/version=\"${PKG_VERSION}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/description=\"[^\"]*\"/description=\"${PKG_DESCRIPTION}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/modelIdentifier=\"[^\"]*\"/modelIdentifier=\"${PKG_NAME}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/generationDateAndTime=\"[^\"]*\"/generationDateAndTime=\"${BUILD_DATE}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s|url=\"[^\"]*\"|url=\"${GIT_REMOTE_URL}\"|g" "${FMU_DIR}/modelDescription.xml"
+
+cat "${FMU_DIR}/modelDescription.xml"
+
+echo "Packaging into fmu..."
+(cd "${FMU_DIR}" && zip -r "../${PKG_NAME}.fmu" .)
+
+echo "Cleaning up..."
+
+rm -rf "${FMU_DIR}"

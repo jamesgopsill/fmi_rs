@@ -2,12 +2,10 @@ use std::ffi::c_void;
 
 use fmi_rs::fmi3::*;
 
-// TODO.
-
 #[derive(Default, Fmi3Ffi)]
 pub struct Add {
-    _a: f64,
-    _b: f64,
+    a: f64,
+    b: f64,
 }
 
 impl Fmi3 for Add {
@@ -26,5 +24,24 @@ impl Fmi3 for Add {
         ),
     ) -> Option<Self> {
         Some(Self::default())
+    }
+
+    fn set_float64(&mut self, vr: u32, value: f64) -> Fmi3Status {
+        match vr {
+            0 => self.a = value,
+            1 => self.b = value,
+            _ => return Fmi3Status::ERROR,
+        }
+        Fmi3Status::OK
+    }
+
+    fn get_float64(&mut self, vr: u32, value: &mut f64) -> Fmi3Status {
+        match vr {
+            0 => *value = self.a,
+            1 => *value = self.b,
+            2 => *value = self.a + self.b,
+            _ => return Fmi3Status::ERROR,
+        }
+        Fmi3Status::OK
     }
 }

@@ -3,21 +3,7 @@
 version = 4
 
 [[package]]
-name = "adder_fmi2"
-version = "0.1.0"
-dependencies = [
- "fmi_rs",
-]
-
-[[package]]
-name = "adder_fmi3"
-version = "0.1.0"
-dependencies = [
- "fmi_rs",
-]
-
-[[package]]
-name = "counter"
+name = "add_fmi3"
 version = "0.1.0"
 dependencies = [
  "fmi_rs",
@@ -36,13 +22,6 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "syn",
-]
-
-[[package]]
-name = "multiplier"
-version = "0.1.0"
-dependencies = [
- "fmi_rs",
 ]
 
 [[package]]

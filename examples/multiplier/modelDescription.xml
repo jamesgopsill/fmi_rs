@@ -17,8 +17,9 @@
     </Tool>
   </VendorAnnotations>
 
-  <CoSimulation
+  <ModelExchange
     modelIdentifier=""
+    canGetAndSetFMUState="false"
     canHandleVariableCommunicationStepSize="true"/>
 
   <ModelVariables>
