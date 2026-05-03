@@ -1,6 +1,6 @@
 [package]
-name = "add_fmi2"
-description = "Add two numbers together."
+name = "spring_mass_damper"
+description = "Simulates a spring damper state space."
 version = "0.1.0"
 edition = "2024"
 
@@ -13,5 +13,6 @@ codegen-units = 1
 crate-type = ["cdylib"]
 
 [dependencies]
+nalgebra = "0.34"
 fmi_rs = { path = "../../fmi_rs" }
 

@@ -452,6 +452,17 @@ macro_rules! generate_fmi3_ffi {
             assert_impl::<$t>();
         };
 
+        // -- panic wrapper
+        fn handle_panic<F>(f: F) -> Fmi3Status
+        where
+            F: Fn() -> Fmi3Status + std::panic::UnwindSafe,
+        {
+            match std::panic::catch_unwind(f) {
+                Ok(r) => r,
+                Err(_) => Fmi3Status::FATAL,
+            }
+        }
+
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3GetVersion() -> *const c_char {
             c"3.0".as_ptr() as *const c_char
@@ -580,26 +591,30 @@ macro_rules! generate_fmi3_ffi {
             n_categories: usize,
             categories: *const Fmi3Str,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if categories.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let categories = unsafe { from_raw_parts(categories, n_categories) };
-            fmu.set_debug_logging(logging_on, categories)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if categories.is_null() {
+                    return Fmi3Status::FATAL;
+                }
+                let categories = unsafe { from_raw_parts(categories, n_categories) };
+                fmu.set_debug_logging(logging_on, categories)
+            })
         }
 
         macro_rules! no_arg_ffi_fcn {
             ($get_fn:ident, $trait_fn:ident) => {
                 #[unsafe(no_mangle)]
                 pub unsafe extern "C" fn $get_fn(fmu: *mut $t) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    fmu.$trait_fn()
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        fmu.$trait_fn()
+                    })
                 }
             };
         }
@@ -622,17 +637,19 @@ macro_rules! generate_fmi3_ffi {
             stop_time_defined: Fmi3Bool,
             stop_time: f64,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.enter_initialization_mode(
-                tolerance_defined,
-                tolerance,
-                start_time,
-                stop_time_defined,
-                stop_time,
-            )
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.enter_initialization_mode(
+                    tolerance_defined,
+                    tolerance,
+                    start_time,
+                    stop_time_defined,
+                    stop_time,
+                )
+            })
         }
 
         macro_rules! get_set_slices_ffi_fcns {
@@ -645,22 +662,24 @@ macro_rules! generate_fmi3_ffi {
                     values: *mut $t_val,
                     nvals: usize,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Fmi3Status::FATAL;
-                    }
-                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-                    let values = unsafe { from_raw_parts_mut(values, nvals) };
-                    for vr in vrs {
-                        let status = fmu.$trait_get(*vr, &mut values[*vr as usize]);
-                        if status != Fmi3Status::OK {
-                            return status;
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        if vrs.is_null() || values.is_null() {
+                            return Fmi3Status::FATAL;
                         }
-                    }
-                    Fmi3Status::OK
+                        let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                        let values = unsafe { from_raw_parts_mut(values, nvals) };
+                        for vr in vrs {
+                            let status = fmu.$trait_get(*vr, &mut values[*vr as usize]);
+                            if status != Fmi3Status::OK {
+                                return status;
+                            }
+                        }
+                        Fmi3Status::OK
+                    })
                 }
 
                 #[unsafe(no_mangle)]
@@ -671,22 +690,24 @@ macro_rules! generate_fmi3_ffi {
                     values: *const $t_val,
                     nvals: usize,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Fmi3Status::FATAL;
-                    }
-                    let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-                    let values = unsafe { from_raw_parts(values, nvals) };
-                    for vr in vrs {
-                        let status = fmu.$trait_set(*vr, values[*vr as usize]);
-                        if status != Fmi3Status::OK {
-                            return status;
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        if vrs.is_null() || values.is_null() {
+                            return Fmi3Status::FATAL;
                         }
-                    }
-                    Fmi3Status::OK
+                        let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                        let values = unsafe { from_raw_parts(values, nvals) };
+                        for vr in vrs {
+                            let status = fmu.$trait_set(*vr, values[*vr as usize]);
+                            if status != Fmi3Status::OK {
+                                return status;
+                            }
+                        }
+                        Fmi3Status::OK
+                    })
                 }
             };
         }
@@ -738,26 +759,28 @@ macro_rules! generate_fmi3_ffi {
             values: *mut *const u8,
             nvals: usize,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if vrs.is_null() || sizes.is_null() || values.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-            let sizes = unsafe { from_raw_parts_mut(sizes, nvals) };
-            let values = unsafe { from_raw_parts_mut(values, nvals) };
-            for vr in vrs {
-                let idx = *vr as usize;
-                let mut size = sizes[idx];
-                let mut value = values[idx];
-                let status = fmu.get_binary(*vr, &mut size, &mut value);
-                if status != Fmi3Status::OK {
-                    return status;
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if vrs.is_null() || sizes.is_null() || values.is_null() {
+                    return Fmi3Status::FATAL;
                 }
-            }
-            Fmi3Status::OK
+                let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                let sizes = unsafe { from_raw_parts_mut(sizes, nvals) };
+                let values = unsafe { from_raw_parts_mut(values, nvals) };
+                for vr in vrs {
+                    let idx = *vr as usize;
+                    let mut size = sizes[idx];
+                    let mut value = values[idx];
+                    let status = fmu.get_binary(*vr, &mut size, &mut value);
+                    if status != Fmi3Status::OK {
+                        return status;
+                    }
+                }
+                Fmi3Status::OK
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -769,27 +792,29 @@ macro_rules! generate_fmi3_ffi {
             values: *const *const u8,
             nvals: usize,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if vrs.is_null() || sizes.is_null() || values.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-            let sizes = unsafe { from_raw_parts(sizes, nvals) };
-            let values = unsafe { from_raw_parts(values, nvals) };
-            for vr in vrs {
-                let idx = *vr as usize;
-                let size = sizes[idx];
-                let start = values[idx];
-                let binary = unsafe { from_raw_parts(start, size) };
-                let status = fmu.set_binary(*vr, &binary);
-                if status != Fmi3Status::OK {
-                    return status;
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if vrs.is_null() || sizes.is_null() || values.is_null() {
+                    return Fmi3Status::FATAL;
                 }
-            }
-            Fmi3Status::OK
+                let vrs = unsafe { from_raw_parts(vrs, nvrs) };
+                let sizes = unsafe { from_raw_parts(sizes, nvals) };
+                let values = unsafe { from_raw_parts(values, nvals) };
+                for vr in vrs {
+                    let idx = *vr as usize;
+                    let size = sizes[idx];
+                    let start = values[idx];
+                    let binary = unsafe { from_raw_parts(start, size) };
+                    let status = fmu.set_binary(*vr, &binary);
+                    if status != Fmi3Status::OK {
+                        return status;
+                    }
+                }
+                Fmi3Status::OK
+            })
         }
 
         macro_rules! fmi2_slice_fcns {
@@ -801,22 +826,24 @@ macro_rules! generate_fmi3_ffi {
                     nvr: usize,
                     values: *mut $t_val,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    if vrs.is_null() || values.is_null() {
-                        return Fmi3Status::FATAL;
-                    }
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts_mut(values, nvr) };
-                    for (vr, value) in std::iter::zip(vrs, values) {
-                        let status = fmu.$trait_get(*vr, value);
-                        if status != Fmi3Status::OK {
-                            return status;
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        if vrs.is_null() || values.is_null() {
+                            return Fmi3Status::FATAL;
                         }
-                    }
-                    Fmi3Status::OK
+                        let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                        let values = unsafe { from_raw_parts_mut(values, nvr) };
+                        for (vr, value) in std::iter::zip(vrs, values) {
+                            let status = fmu.$trait_get(*vr, value);
+                            if status != Fmi3Status::OK {
+                                return status;
+                            }
+                        }
+                        Fmi3Status::OK
+                    })
                 }
 
                 #[unsafe(no_mangle)]
@@ -826,19 +853,21 @@ macro_rules! generate_fmi3_ffi {
                     nvr: usize,
                     values: *const $t_val,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    let vrs = unsafe { from_raw_parts(vrs, nvr) };
-                    let values = unsafe { from_raw_parts(values, nvr) };
-                    for (vr, value) in std::iter::zip(vrs, values) {
-                        let status = fmu.$trait_set(*vr, *value);
-                        if status != Fmi3Status::OK {
-                            return status;
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        let vrs = unsafe { from_raw_parts(vrs, nvr) };
+                        let values = unsafe { from_raw_parts(values, nvr) };
+                        for (vr, value) in std::iter::zip(vrs, values) {
+                            let status = fmu.$trait_set(*vr, *value);
+                            if status != Fmi3Status::OK {
+                                return status;
+                            }
                         }
-                    }
-                    Fmi3Status::OK
+                        Fmi3Status::OK
+                    })
                 }
             };
         }
@@ -873,24 +902,27 @@ macro_rules! generate_fmi3_ffi {
             counters: *mut u64,
             resolutions: *mut u64,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, n) };
-            let counters = unsafe { from_raw_parts_mut(counters, n) };
-            let resolutions = unsafe { from_raw_parts_mut(resolutions, n) };
-            for vr in vrs {
-                let idx = *vr as usize;
-                let status = fmu.get_shift_fraction(*vr, &mut counters[idx], &mut resolutions[idx]);
-                if status != Fmi3Status::OK {
-                    return status;
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                    return Fmi3Status::FATAL;
                 }
-            }
-            Fmi3Status::OK
+                let vrs = unsafe { from_raw_parts(vrs, n) };
+                let counters = unsafe { from_raw_parts_mut(counters, n) };
+                let resolutions = unsafe { from_raw_parts_mut(resolutions, n) };
+                for vr in vrs {
+                    let idx = *vr as usize;
+                    let status =
+                        fmu.get_shift_fraction(*vr, &mut counters[idx], &mut resolutions[idx]);
+                    if status != Fmi3Status::OK {
+                        return status;
+                    }
+                }
+                Fmi3Status::OK
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -901,24 +933,26 @@ macro_rules! generate_fmi3_ffi {
             counters: *const u64,
             resolutions: *const u64,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if vrs.is_null() || counters.is_null() || resolutions.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let vrs = unsafe { from_raw_parts(vrs, n) };
-            let counters = unsafe { from_raw_parts(counters, n) };
-            let resolutions = unsafe { from_raw_parts(resolutions, n) };
-            for vr in vrs {
-                let idx = *vr as usize;
-                let status = fmu.set_shift_fraction(*vr, counters[idx], resolutions[idx]);
-                if status != Fmi3Status::OK {
-                    return status;
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if vrs.is_null() || counters.is_null() || resolutions.is_null() {
+                    return Fmi3Status::FATAL;
                 }
-            }
-            Fmi3Status::OK
+                let vrs = unsafe { from_raw_parts(vrs, n) };
+                let counters = unsafe { from_raw_parts(counters, n) };
+                let resolutions = unsafe { from_raw_parts(resolutions, n) };
+                for vr in vrs {
+                    let idx = *vr as usize;
+                    let status = fmu.set_shift_fraction(*vr, counters[idx], resolutions[idx]);
+                    if status != Fmi3Status::OK {
+                        return status;
+                    }
+                }
+                Fmi3Status::OK
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -927,19 +961,21 @@ macro_rules! generate_fmi3_ffi {
             state: *mut c_void,
             size: *mut usize,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            let size = match unsafe { size.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.serialized_fmu_state_size(state, size)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                let size = match unsafe { size.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.serialized_fmu_state_size(state, size)
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -949,19 +985,21 @@ macro_rules! generate_fmi3_ffi {
             serialized_state: *mut u8, // fmi2Byte is u8
             size: usize,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            if serialized_state.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let buffer = unsafe { from_raw_parts_mut(serialized_state, size) };
-            fmu.serialize_fmu_state(state, buffer)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                if serialized_state.is_null() {
+                    return Fmi3Status::FATAL;
+                }
+                let buffer = unsafe { from_raw_parts_mut(serialized_state, size) };
+                fmu.serialize_fmu_state(state, buffer)
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -971,19 +1009,21 @@ macro_rules! generate_fmi3_ffi {
             size: usize,
             state: *mut *mut c_void,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            if serialized_state.is_null() {
-                return Fmi3Status::FATAL;
-            }
-            let buffer = unsafe { std::slice::from_raw_parts(serialized_state, size) };
-            fmu.deserialized_fmu_state(buffer, size, state)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                if serialized_state.is_null() {
+                    return Fmi3Status::FATAL;
+                }
+                let buffer = unsafe { std::slice::from_raw_parts(serialized_state, size) };
+                fmu.deserialized_fmu_state(buffer, size, state)
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -991,41 +1031,47 @@ macro_rules! generate_fmi3_ffi {
             fmu: *mut $t,
             state: *mut *mut c_void,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.get_fmu_state(state)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.get_fmu_state(state)
+            })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3SetFMUstate(fmu: *mut $t, state: *mut c_void) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.set_fmu_state(state)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.set_fmu_state(state)
+            })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3FreeFMUstate(fmu: *mut $t, state: *mut c_void) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let state = match unsafe { state.as_mut() } {
-                Some(s) => s,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.free_fmu_state(state)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let state = match unsafe { state.as_mut() } {
+                    Some(s) => s,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.free_fmu_state(state)
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -1040,23 +1086,25 @@ macro_rules! generate_fmi3_ffi {
             dv_unknown_mut_ptr: *mut f64,
             n_dv_unknown: usize,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            if v_unknown_ptr.is_null()
-                || v_known_ptr.is_null()
-                || dv_known_ptr.is_null()
-                || dv_unknown_mut_ptr.is_null()
-            {
-                return Fmi3Status::FATAL;
-            }
-            let v_unknown = unsafe { from_raw_parts(v_unknown_ptr, n_unknown) };
-            let dv_unknown = unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_dv_unknown) };
-            let v_known = unsafe { from_raw_parts(v_known_ptr, n_known) };
-            let dv_known = unsafe { from_raw_parts(dv_known_ptr, n_dv_known) };
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                if v_unknown_ptr.is_null()
+                    || v_known_ptr.is_null()
+                    || dv_known_ptr.is_null()
+                    || dv_unknown_mut_ptr.is_null()
+                {
+                    return Fmi3Status::FATAL;
+                }
+                let v_unknown = unsafe { from_raw_parts(v_unknown_ptr, n_unknown) };
+                let dv_unknown = unsafe { from_raw_parts_mut(dv_unknown_mut_ptr, n_dv_unknown) };
+                let v_known = unsafe { from_raw_parts(v_known_ptr, n_known) };
+                let dv_known = unsafe { from_raw_parts(dv_known_ptr, n_dv_known) };
 
-            fmu.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
+                fmu.get_directional_derivative(v_known, v_unknown, dv_known, dv_unknown)
+            })
         }
 
         // -- CO-SIMULATION / STEPPING --
@@ -1072,61 +1120,67 @@ macro_rules! generate_fmi3_ffi {
             early_return: *mut Fmi3Bool,
             last_successful_time: *mut f64,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let event_encountered = match unsafe { event_encountered.as_mut() } {
-                Some(e) => e,
-                None => return Fmi3Status::FATAL,
-            };
-            let terminate = match unsafe { terminate.as_mut() } {
-                Some(t) => t,
-                None => return Fmi3Status::FATAL,
-            };
-            let early_return = match unsafe { early_return.as_mut() } {
-                Some(e) => e,
-                None => return Fmi3Status::FATAL,
-            };
-            let last_successful_time = match unsafe { last_successful_time.as_mut() } {
-                Some(l) => l,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.do_step(
-                current_communication_point,
-                communication_step_size,
-                no_set_fmu_state_prior,
-                event_encountered,
-                terminate,
-                early_return,
-                last_successful_time,
-            )
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let event_encountered = match unsafe { event_encountered.as_mut() } {
+                    Some(e) => e,
+                    None => return Fmi3Status::FATAL,
+                };
+                let terminate = match unsafe { terminate.as_mut() } {
+                    Some(t) => t,
+                    None => return Fmi3Status::FATAL,
+                };
+                let early_return = match unsafe { early_return.as_mut() } {
+                    Some(e) => e,
+                    None => return Fmi3Status::FATAL,
+                };
+                let last_successful_time = match unsafe { last_successful_time.as_mut() } {
+                    Some(l) => l,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.do_step(
+                    current_communication_point,
+                    communication_step_size,
+                    no_set_fmu_state_prior,
+                    event_encountered,
+                    terminate,
+                    early_return,
+                    last_successful_time,
+                )
+            })
         }
 
         // -- MODEL EXCHANGE --
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3SetTime(fmu: *mut $t, time: f64) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.set_time(time)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.set_time(time)
+            })
         }
 
         macro_rules! get_number_of {
             ($get_fn:ident, $trait_get:ident) => {
                 #[unsafe(no_mangle)]
                 pub unsafe extern "C" fn $get_fn(fmu: *mut $t, n: *mut usize) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    let n = match unsafe { n.as_mut() } {
-                        Some(n) => n,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    fmu.$trait_get(n)
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        let n = match unsafe { n.as_mut() } {
+                            Some(n) => n,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        fmu.$trait_get(n)
+                    })
                 }
             };
         }
@@ -1149,15 +1203,17 @@ macro_rules! generate_fmi3_ffi {
                     x: *mut f64,
                     nx: usize,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    if x.is_null() {
-                        return Fmi3Status::FATAL;
-                    }
-                    let x = unsafe { from_raw_parts_mut(x, nx) };
-                    fmu.$trait_get(x)
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        if x.is_null() {
+                            return Fmi3Status::FATAL;
+                        }
+                        let x = unsafe { from_raw_parts_mut(x, nx) };
+                        fmu.$trait_get(x)
+                    })
                 }
 
                 #[unsafe(no_mangle)]
@@ -1166,15 +1222,17 @@ macro_rules! generate_fmi3_ffi {
                     x: *const f64,
                     nx: usize,
                 ) -> Fmi3Status {
-                    let fmu = match unsafe { fmu.as_mut() } {
-                        Some(f) => f,
-                        None => return Fmi3Status::FATAL,
-                    };
-                    if x.is_null() {
-                        return Fmi3Status::FATAL;
-                    }
-                    let x = unsafe { from_raw_parts(x, nx) };
-                    fmu.$trait_set(x)
+                    handle_panic(|| {
+                        let fmu = match unsafe { fmu.as_mut() } {
+                            Some(f) => f,
+                            None => return Fmi3Status::FATAL,
+                        };
+                        if x.is_null() {
+                            return Fmi3Status::FATAL;
+                        }
+                        let x = unsafe { from_raw_parts(x, nx) };
+                        fmu.$trait_set(x)
+                    })
                 }
             };
         }
@@ -1221,19 +1279,21 @@ macro_rules! generate_fmi3_ffi {
             enter_event_mode: *const Fmi3Bool,
             terminate_simulation: *const Fmi3Bool,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let e = match unsafe { enter_event_mode.as_ref() } {
-                Some(n) => n,
-                None => return Fmi3Status::FATAL,
-            };
-            let t = match unsafe { terminate_simulation.as_ref() } {
-                Some(t) => t,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.completed_integrator_step(no_set_fmu_state_prior_to_current_point, e, t)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let e = match unsafe { enter_event_mode.as_ref() } {
+                    Some(n) => n,
+                    None => return Fmi3Status::FATAL,
+                };
+                let t = match unsafe { terminate_simulation.as_ref() } {
+                    Some(t) => t,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.completed_integrator_step(no_set_fmu_state_prior_to_current_point, e, t)
+            })
         }
 
         #[unsafe(no_mangle)]
@@ -1246,35 +1306,37 @@ macro_rules! generate_fmi3_ffi {
             next_event_time_defined: *mut Fmi3Bool,
             next_event_time: *mut f64,
         ) -> Fmi3Status {
-            let fmu = match unsafe { fmu.as_mut() } {
-                Some(f) => f,
-                None => return Fmi3Status::FATAL,
-            };
-            let d = match unsafe { discrete_states_needs_update.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            let t = match unsafe { terminate_simulation.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            let n = match unsafe { nominals_of_continuous_states_changed.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            let v = match unsafe { values_of_continuous_states_changed.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            let nxt = match unsafe { next_event_time_defined.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            let time = match unsafe { next_event_time.as_mut() } {
-                Some(v) => v,
-                None => return Fmi3Status::FATAL,
-            };
-            fmu.update_discrete_states(d, t, n, v, nxt, time)
+            handle_panic(|| {
+                let fmu = match unsafe { fmu.as_mut() } {
+                    Some(f) => f,
+                    None => return Fmi3Status::FATAL,
+                };
+                let d = match unsafe { discrete_states_needs_update.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                let t = match unsafe { terminate_simulation.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                let n = match unsafe { nominals_of_continuous_states_changed.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                let v = match unsafe { values_of_continuous_states_changed.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                let nxt = match unsafe { next_event_time_defined.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                let time = match unsafe { next_event_time.as_mut() } {
+                    Some(v) => v,
+                    None => return Fmi3Status::FATAL,
+                };
+                fmu.update_discrete_states(d, t, n, v, nxt, time)
+            })
         }
     };
 }

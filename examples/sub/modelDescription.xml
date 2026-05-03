@@ -7,20 +7,20 @@
   version=""
   generationDateAndTime=""
   generationTool="fmi_rs"
-  author = "James Gopsill"
+  author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">
-
-  <!-- modelIdentifier: Name of the binary. -->
-  <ModelExchange
-    modelIdentifier=""
-    numberOfEventIndicators="0" />
 
   <VendorAnnotations>
     <Tool name="SourceControl">
       <Repository url="" />
     </Tool>
   </VendorAnnotations>
+
+  <ModelExchange
+    modelIdentifier=""
+    canGetAndSetFMUState="false"
+    canHandleVariableCommunicationStepSize="true"/>
 
   <ModelVariables>
     <ScalarVariable name="a" valueReference="0" causality="input">
@@ -36,8 +36,7 @@
 
   <ModelStructure>
     <Outputs>
-      <!-- Indexed as they appear in this file. -->
-      <Unknown index="3" dependencies="1 2" dependenciesKind="fixed fixed" />
+      <Unknown index="3" dependencies="1 2" />
     </Outputs>
   </ModelStructure>
 </fmiModelDescription>

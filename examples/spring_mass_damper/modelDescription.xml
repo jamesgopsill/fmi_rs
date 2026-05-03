@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  modelName=""
+  description=""
+  guid=""
+  version=""
+  generationDateAndTime=""
+  generationTool="fmi_rs"
+  author = "James Gopsill"
+  license="MIT"
+  variableNamingConvention="flat">
+
+  <!-- modelIdentifier: Name of the binary. -->
+  <CoSimulation
+    modelIdentifier="" />
+
+  <VendorAnnotations>
+    <Tool name="SourceControl">
+      <Repository url="" />
+    </Tool>
+  </VendorAnnotations>
+
+  <ModelVariables>
+    <ScalarVariable name="Mass" valueReference="0" causality="parameter" variability="tunable">
+      <Real start="1.0" />
+    </ScalarVariable>
+    <ScalarVariable name="Spring Stiffness" valueReference="1" causality="parameter" variability="tunable">
+      <Real start="10.0" />
+    </ScalarVariable>
+    <ScalarVariable name="Damping Coefficient" valueReference="2" causality="parameter" variability="tunable">
+      <Real start="0.5" />
+    </ScalarVariable>
+    <ScalarVariable name="Initial Extension" valueReference="3" causality="parameter" variability="tunable">
+      <Real start="0.5" />
+    </ScalarVariable>
+    <ScalarVariable name="Velocity" valueReference="4" causality="output">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="Position" valueReference="5" causality="output">
+      <Real />
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <!-- Indexed as they appear in this file. -->
+      <Unknown index="5" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
+      <Unknown index="6" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
+    </Outputs>
+  </ModelStructure>
+</fmiModelDescription>

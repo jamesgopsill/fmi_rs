@@ -3,25 +3,11 @@
 version = 4
 
 [[package]]
-name = "fmi_rs"
-version = "0.1.0"
-dependencies = [
- "fmi_rs_macros",
-]
-
-[[package]]
 name = "fmi_rs_macros"
 version = "0.1.0"
 dependencies = [
  "quote",
  "syn",
-]
-
-[[package]]
-name = "multiplier"
-version = "0.1.0"
-dependencies = [
- "fmi_rs",
 ]
 
 [[package]]
