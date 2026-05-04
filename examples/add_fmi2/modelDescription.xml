@@ -9,12 +9,10 @@
   generationTool="fmi_rs"
   author = "James Gopsill"
   license="MIT"
-  variableNamingConvention="flat">
+  variableNamingConvention="flat"
+  numberOfEventIndicators="0">
 
-  <!-- modelIdentifier: Name of the binary. -->
-  <ModelExchange
-    modelIdentifier=""
-    numberOfEventIndicators="0" />
+  <ModelExchange modelIdentifier="" />
 
   <VendorAnnotations>
     <Tool name="SourceControl">

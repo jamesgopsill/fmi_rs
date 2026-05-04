@@ -11,17 +11,13 @@
   license="MIT"
   variableNamingConvention="flat">
 
+  <CoSimulation modelIdentifier="" />
+
   <VendorAnnotations>
     <Tool name="SourceControl">
       <Repository url="" />
     </Tool>
   </VendorAnnotations>
-
-  <ModelExchange
-    modelIdentifier=""
-    hasEventMode="false"
-    canGetAndSetFMUState="false"
-    canSerializeFMUState="false"/>
 
   <ModelVariables>
     <Float64 name="a" 

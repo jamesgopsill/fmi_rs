@@ -157,99 +157,99 @@ pub trait Fmi3: Sized {
         Fmi3Status::OK
     }
 
-    fn get_float64(&mut self, _vr: u32, _value: &mut f64) -> Fmi3Status {
+    fn get_float64(&mut self, _vrs: &[u32], _values: &mut [f64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_float64(&mut self, _vr: u32, _value: f64) -> Fmi3Status {
+    fn set_float64(&mut self, _vrs: &[u32], _values: &[f64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_float32(&mut self, _vr: u32, _value: &mut f32) -> Fmi3Status {
+    fn get_float32(&mut self, _vrs: &[u32], _values: &mut [f32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_float32(&mut self, _vr: u32, _value: f32) -> Fmi3Status {
+    fn set_float32(&mut self, _vrs: &[u32], _values: &[f32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int8(&mut self, _vr: u32, _value: &mut i8) -> Fmi3Status {
+    fn get_int8(&mut self, _vrs: &[u32], _values: &mut [i8]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int8(&mut self, _vr: u32, _value: i8) -> Fmi3Status {
+    fn set_int8(&mut self, _vrs: &[u32], _values: &[i8]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int16(&mut self, _vr: u32, _value: &mut i16) -> Fmi3Status {
+    fn get_int16(&mut self, _vrs: &[u32], _values: &mut [i16]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int16(&mut self, _vr: u32, _value: i16) -> Fmi3Status {
+    fn set_int16(&mut self, _vrs: &[u32], _values: &[i16]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int32(&mut self, _vr: u32, _value: &mut i32) -> Fmi3Status {
+    fn get_int32(&mut self, _vrs: &[u32], _values: &mut [i32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int32(&mut self, _vr: u32, _value: i32) -> Fmi3Status {
+    fn set_int32(&mut self, _vrs: &[u32], _values: &[i32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_int64(&mut self, _vr: u32, _value: &mut i64) -> Fmi3Status {
+    fn get_int64(&mut self, _vrs: &[u32], _values: &mut [i64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_int64(&mut self, _vr: u32, _value: i64) -> Fmi3Status {
+    fn set_int64(&mut self, _vrs: &[u32], _values: &[i64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint8(&mut self, _vr: u32, _value: &mut u8) -> Fmi3Status {
+    fn get_uint8(&mut self, _vrs: &[u32], _values: &mut [u8]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint8(&mut self, _vr: u32, _value: u8) -> Fmi3Status {
+    fn set_uint8(&mut self, _vrs: &[u32], _values: &[u8]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint16(&mut self, _vr: u32, _value: &mut u16) -> Fmi3Status {
+    fn get_uint16(&mut self, _vrs: &[u32], _values: &mut [u16]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint16(&mut self, _vr: u32, _value: u16) -> Fmi3Status {
+    fn set_uint16(&mut self, _vrs: &[u32], _values: &[u16]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint32(&mut self, _vr: u32, _value: &mut u32) -> Fmi3Status {
+    fn get_uint32(&mut self, _vrs: &[u32], _values: &mut [u32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint32(&mut self, _vr: u32, _value: u32) -> Fmi3Status {
+    fn set_uint32(&mut self, _vrs: &[u32], _values: &[u32]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_uint64(&mut self, _vr: u32, _value: &mut u64) -> Fmi3Status {
+    fn get_uint64(&mut self, _vrs: &[u32], _values: &mut [u64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_uint64(&mut self, _vr: u32, _value: u64) -> Fmi3Status {
+    fn set_uint64(&mut self, _vrs: &[u32], _values: &[u64]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_boolean(&mut self, _vr: u32, _value: &mut Fmi3Bool) -> Fmi3Status {
+    fn get_boolean(&mut self, _vrs: &[u32], _values: &mut [Fmi3Bool]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_boolean(&mut self, _vr: u32, _value: Fmi3Bool) -> Fmi3Status {
+    fn set_boolean(&mut self, _vrs: &[u32], _values: &[Fmi3Bool]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn get_string(&mut self, _vr: u32, _value: &mut Fmi3Str) -> Fmi3Status {
+    fn get_string(&mut self, _vrs: &[u32], _value: &mut [Fmi3Str]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
-    fn set_string(&mut self, _vr: u32, _value: Fmi3Str) -> Fmi3Status {
+    fn set_string(&mut self, _vrs: &[u32], _value: &[Fmi3Str]) -> Fmi3Status {
         Fmi3Status::ERROR
     }
 
@@ -517,9 +517,13 @@ macro_rules! generate_fmi3_ffi {
             ),
             intermediate_update: *const extern "C" fn(instance_enivronment: *mut c_void),
         ) -> *mut c_void {
+            /*
+            TODO: can be null so need to handle the case.
+            empty slice?
             if required_intermediate_variables.is_null() {
                 return std::ptr::null_mut();
             }
+            */
             let rivs = unsafe {
                 from_raw_parts(
                     required_intermediate_variables,
@@ -671,14 +675,8 @@ macro_rules! generate_fmi3_ffi {
                             return Fmi3Status::FATAL;
                         }
                         let vrs = unsafe { from_raw_parts(vrs, nvrs) };
-                        let values = unsafe { from_raw_parts_mut(values, nvals) };
-                        for vr in vrs {
-                            let status = fmu.$trait_get(*vr, &mut values[*vr as usize]);
-                            if status != Fmi3Status::OK {
-                                return status;
-                            }
-                        }
-                        Fmi3Status::OK
+                        let mut values = unsafe { from_raw_parts_mut(values, nvals) };
+                        fmu.$trait_get(&vrs, &mut values)
                     })
                 }
 
@@ -700,13 +698,7 @@ macro_rules! generate_fmi3_ffi {
                         }
                         let vrs = unsafe { from_raw_parts(vrs, nvrs) };
                         let values = unsafe { from_raw_parts(values, nvals) };
-                        for vr in vrs {
-                            let status = fmu.$trait_set(*vr, values[*vr as usize]);
-                            if status != Fmi3Status::OK {
-                                return status;
-                            }
-                        }
-                        Fmi3Status::OK
+                        fmu.$trait_set(&vrs, &values)
                     })
                 }
             };
@@ -748,7 +740,6 @@ macro_rules! generate_fmi3_ffi {
             set_string,
             Fmi3Str
         );
-        get_set_slices_ffi_fcns!(fmi3GetClocks, fmi3SetClocks, get_clock, set_clock, Fmi3Bool);
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3GetBinary(
@@ -893,6 +884,7 @@ macro_rules! generate_fmi3_ffi {
             set_shift_decimal,
             f64
         );
+        fmi2_slice_fcns!(fmi3GetClock, fmi3SetClock, get_clock, set_clock, Fmi3Bool);
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn fmi3GetShiftFraction(
