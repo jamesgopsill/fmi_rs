@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName=""
+  description=""
+  instantiationToken=""
+  version=""
+  generationDateAndTime=""
+  generationTool="fmi_rs"
+  author="James Gopsill"
+  license="MIT"
+  variableNamingConvention="flat">
+
+  <CoSimulation modelIdentifier="" />
+
+  <VendorAnnotations>
+    <Tool name="SourceControl">
+      <Repository url="" />
+    </Tool>
+  </VendorAnnotations>
+
+  <ModelVariables>
+    <Float64 name="a" 
+             valueReference="0" 
+             causality="input" 
+             variability="continuous">
+    </Float64>
+    <Float64 name="b" 
+             valueReference="1" 
+             causality="input" 
+             variability="continuous">
+    </Float64>
+    <Float64 name="c" 
+             valueReference="2" 
+             causality="output" 
+             variability="continuous"/>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Output valueReference="2" 
+            dependencies="0 1" 
+            dependenciesKind="fixed fixed"/>
+    <InitialUnknown valueReference="2"
+                    dependencies="0 1"
+                    dependenciesKind="fixed fixed"/>
+  </ModelStructure>
+</fmiModelDescription>

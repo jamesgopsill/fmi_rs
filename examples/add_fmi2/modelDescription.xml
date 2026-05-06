@@ -1,24 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
   fmiVersion="2.0"
-  modelName=""
-  description=""
-  guid=""
-  version=""
-  generationDateAndTime=""
-  generationTool="fmi_rs"
   author = "James Gopsill"
   license="MIT"
   variableNamingConvention="flat"
   numberOfEventIndicators="0">
 
-  <ModelExchange modelIdentifier="" />
-
-  <VendorAnnotations>
-    <Tool name="SourceControl">
-      <Repository url="" />
-    </Tool>
-  </VendorAnnotations>
+  <ModelExchange />
 
   <ModelVariables>
     <ScalarVariable name="a" valueReference="0" causality="input">

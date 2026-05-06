@@ -1,0 +1,16 @@
+[package]
+name = "add_thread"
+description = "Add two numbers together using threads."
+version = "0.1.0"
+edition = "2024"
+
+[profile.release]
+panic = "abort"
+lto = true
+codegen-units = 1
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+fmi_rs = { path = "../../fmi_rs" }

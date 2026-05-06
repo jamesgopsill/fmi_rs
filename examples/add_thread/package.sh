@@ -10,14 +10,14 @@ GIT_REMOTE_URL=$(git remote get-url origin)
 
 echo "Building ${PKG_NAME} from ${GIT_REMOTE_URL} ..."
 
-# Remove old dir if exists
 rm -rf "{$FMU_DIR}"
-mkdir -p "${FMU_DIR}/binaries/win64"
+mkdir -p "${FMU_DIR}/binaries/x86_64-windows"
 mkdir -p "${FMU_DIR}/documentation"
 
 echo "Copying files..."
 
-cp "./target/x86_64-pc-windows-gnu/release/${PKG_NAME}.dll" "${FMU_DIR}/binaries/win64/"
+# Look up one as in workspace.
+cp "./target/x86_64-pc-windows-gnu/release/${PKG_NAME}.dll" "${FMU_DIR}/binaries/x86_64-windows/"
 cp ./modelDescription.xml "${FMU_DIR}/"
 cp ./README.md "${FMU_DIR}/documentation"
 
@@ -25,20 +25,19 @@ cp ./README.md "${FMU_DIR}/documentation"
 BUILD_GUID="{$(uuidgen -7)}"
 BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo "Build GUID: ${BUILD_GUID}"
-echo "Updating xml..."
 sed -i "s/modelName=\"[^\"]*\"/modelName=\"fmu--${PKG_NAME}\"/g" "${FMU_DIR}/modelDescription.xml"
-sed -i "s/guid=\"[^\"]*\"/guid=\"${BUILD_GUID}\"/g" "${FMU_DIR}/modelDescription.xml"
-sed -i "s/version=\"\"*\"/version=\"${PKG_VERSION}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/instantiationToken=\"[^\"]*\"/instantiationToken=\"${BUILD_GUID}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/version=\"\"/version=\"${PKG_VERSION}\"/g" "${FMU_DIR}/modelDescription.xml"
 sed -i "s/description=\"[^\"]*\"/description=\"${PKG_DESCRIPTION}\"/g" "${FMU_DIR}/modelDescription.xml"
-sed -i "s/modelIdentifier=\"[^\"]*\"/modelIdentifier=\"${PKG_NAME}\"/g" "${FMU_DIR}/modelDescription.xml"
+sed -i "s/modelIdentifier=\"\"*\"/modelIdentifier=\"${PKG_NAME}\"/g" "${FMU_DIR}/modelDescription.xml"
 sed -i "s/generationDateAndTime=\"[^\"]*\"/generationDateAndTime=\"${BUILD_DATE}\"/g" "${FMU_DIR}/modelDescription.xml"
 sed -i "s|url=\"[^\"]*\"|url=\"${GIT_REMOTE_URL}\"|g" "${FMU_DIR}/modelDescription.xml"
 
 cat "${FMU_DIR}/modelDescription.xml"
 
-# Packaging
 echo "Packaging into fmu..."
 (cd "${FMU_DIR}" && zip -r "../${PKG_NAME}.fmu" .)
 
 echo "Cleaning up..."
+
 rm -rf "${FMU_DIR}"

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  author = "James Gopsill"
+  license="MIT"
+  variableNamingConvention="flat"
+  numberOfEventIndicators="1">
+
+  <ModelExchange />
+
+  <ModelVariables>
+    <ScalarVariable name="h" valueReference="0" causality="output" variability="continuous">
+      <Real start="1" />
+    </ScalarVariable>
+    <ScalarVariable name="der(h)" valueReference="1" causality="local" variability="continuous">
+      <Real start="0" />
+    </ScalarVariable>
+    <ScalarVariable name="v" valueReference="2" causality="output" variability="continuous">
+      <Real start="0" />
+    </ScalarVariable>
+    <ScalarVariable name="der(v)" valueReference="3" causality="local" variability="continuous">
+      <Real start="0" />
+    </ScalarVariable>
+    <ScalarVariable name="g" valueReference="4" causality="parameter" variability="fixed">
+      <Real start="-9.81" />
+    </ScalarVariable>
+    <ScalarVariable name="e" valueReference="5" causality="parameter" variability="fixed">
+      <Real start="0.7" />
+    </ScalarVariable>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Outputs>
+      <Unknown index="1" dependencies=""/>
+      <Unknown index="3" dependencies=""/>
+    </Outputs>
+    <Derivatives>
+      <Unknown index="2" dependencies="4" dependenciesKind="constant"/>
+      <Unknown index="4" dependencies="5" dependenciesKind="constant"/>
+    </Derivatives>
+    <InitialUnknowns>
+      <Unknown index="2" dependencies="4" dependenciesKind="constant"/>
+      <Unknown index="4" dependencies="5" dependenciesKind="constant"/>
+    </InitialUnknowns>
+  </ModelStructure>
+</fmiModelDescription>
