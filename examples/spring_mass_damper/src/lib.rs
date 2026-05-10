@@ -102,6 +102,8 @@ impl Fmi2 for SpringMassDamper {
         Fmi2Status::OK
     }
 
+    // Co-Simulation Variant
+
     fn do_step(
         &mut self,
         _current_communication_point: f64,
@@ -112,6 +114,26 @@ impl Fmi2 for SpringMassDamper {
         let derivative = self.A * self.x + self.B * self.u;
         // Euler Integration
         self.x += derivative * communication_step_size;
+        Fmi2Status::OK
+    }
+
+    // Model Exchange Variant
+    fn get_continuous_states(&mut self, x: &mut [f64]) -> Fmi2Status {
+        x[0] = self.x[0];
+        x[1] = self.x[1];
+        Fmi2Status::OK
+    }
+
+    fn set_continuous_states(&mut self, x: &[f64]) -> Fmi2Status {
+        self.x[0] = x[0];
+        self.x[1] = x[1];
+        Fmi2Status::OK
+    }
+
+    fn get_derivatives(&mut self, dx: &mut [f64]) -> Fmi2Status {
+        let derivative = self.A * self.x + self.B * self.u;
+        dx[0] = derivative[0];
+        dx[1] = derivative[1];
         Fmi2Status::OK
     }
 }

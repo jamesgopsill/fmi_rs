@@ -9,11 +9,13 @@
   generationTool="fmi_rs"
   author = "James Gopsill"
   license="MIT"
-  variableNamingConvention="flat">
+  variableNamingConvention="flat"
+  numberOfEventIndicators="0">
 
   <!-- modelIdentifier: Name of the binary. -->
-  <CoSimulation
-    modelIdentifier="" />
+  <CoSimulation />
+
+  <ModelExchange />
 
   <VendorAnnotations>
     <Tool name="SourceControl">
@@ -34,10 +36,16 @@
     <ScalarVariable name="Initial Extension" valueReference="3" causality="parameter" variability="tunable">
       <Real start="0.5" />
     </ScalarVariable>
-    <ScalarVariable name="Velocity" valueReference="4" causality="output">
+    <ScalarVariable name="Velocity" valueReference="4" causality="output" variability="continuous">
       <Real />
     </ScalarVariable>
-    <ScalarVariable name="Position" valueReference="5" causality="output">
+    <ScalarVariable name="Position" valueReference="5" causality="output" variability="continuous">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="der(v)" valueReference="6" causality="local" variabilty="continuous">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="der(p)" valueReference="7" causality="local" variability="continuous">
       <Real />
     </ScalarVariable>
   </ModelVariables>
@@ -48,5 +56,13 @@
       <Unknown index="5" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
       <Unknown index="6" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
     </Outputs>
+    <Derivatives>
+      <Unknown index="6" dependencies="1 2 3" dependenciesKind="constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+    </Derivatives>
+    <InitialUnknowns>
+      <Unknown index="6" dependencies="1 2 3" dependenciesKind="constant"/>
+      <Unknown index="7" dependencies="6" dependenciesKind="constant"/>
+    </InitialUnknowns>
   </ModelStructure>
 </fmiModelDescription>

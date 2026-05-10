@@ -10,25 +10,34 @@ import xml.etree.ElementTree as ET
 
 FMU_DIR = Path("target/fmu")
 
+
 def uuid7() -> str:
     ms = int(time.time() * 1000)
     rand = os.urandom(10)
-    uuid_int = (ms << 80) | (7 << 76) | ((rand[0] & 0x0f) << 72) | (rand[1] << 64) | (2 << 62) | (int.from_bytes(rand[2:], 'big'))
+    uuid_int = (
+        (ms << 80)
+        | (7 << 76)
+        | ((rand[0] & 0x0F) << 72)
+        | (rand[1] << 64)
+        | (2 << 62)
+        | (int.from_bytes(rand[2:], "big"))
+    )
     return str(uuid.UUID(int=uuid_int))
+
 
 def shell_cmd(cmd: str) -> str:
     result = subprocess.run(cmd, capture_output=True, shell=True)
     if result.returncode != 0:
         print(f"[ERROR] (cmd) {result.stderr}")
         exit(1)
-    return result.stdout.strip()
+    return result.stdout.strip().decode()
 
 
 def main():
     if FMU_DIR.exists():
         print("[INFO] Removing old fmu temp directory.")
         shutil.rmtree(FMU_DIR)
-    FMU_DIR.mkdir(parents = True)
+    FMU_DIR.mkdir(parents=True)
 
     print("[INFO] Building FMU")
     shell_cmd("cargo build --release --target=x86_64-pc-windows-gnu")
@@ -44,7 +53,7 @@ def main():
     pkg_description = manifest_json["description"]
     print(f"[INFO] PKG DESCRIPTION: {pkg_description}")
 
-    git_remote_url = shell_cmd("git remote get-url origin").decode()
+    git_remote_url = shell_cmd("git remote get-url origin")
     print(f"[INFO] GIT URL: {git_remote_url}")
 
     guid = uuid7()
@@ -55,7 +64,7 @@ def main():
     tree = ET.parse("modelDescription.xml")
     root = tree.getroot()
 
-    root.set("modelName", "fmu--"+pkg_name)
+    root.set("modelName", "fmu--" + pkg_name)
     root.set("description", pkg_description)
     root.set("guid", guid)
     root.set("version", pkg_version)
@@ -63,7 +72,12 @@ def main():
     root.set("generationDateAndTime", build_date)
 
     me = root.find("ModelExchange")
-    me.set("modelIdentifier", pkg_name)
+    if me is not None:
+        me.set("modelIdentifier", pkg_name)
+
+    cs = root.find("CoSimulation")
+    if cs is not None:
+        cs.set("modelIdentifier", pkg_name)
 
     # Vendor Annotations
     annotations = ET.Element("VendorAnnotations")
@@ -87,15 +101,15 @@ def main():
             el.tail = None
     ET.indent(root, space="  ")
 
-    print(f"[INFO] Writing the XML")
+    print("[INFO] Writing the XML")
     xml_out = FMU_DIR / "modelDescription.xml"
     tree.write(xml_out, encoding="utf-8", xml_declaration=True)
 
     # Copying the files
     bin_path = FMU_DIR / "binaries" / "win64"
-    bin_path.mkdir(parents = True)
+    bin_path.mkdir(parents=True)
     doc_path = FMU_DIR / "documentation"
-    doc_path.mkdir(parents = True)
+    doc_path.mkdir(parents=True)
 
     dll = Path("target") / "x86_64-pc-windows-gnu" / "release" / f"{pkg_name}.dll"
     if not dll.exists():
@@ -103,7 +117,7 @@ def main():
         exit(1)
 
     if not Path("README.md").exists():
-        print(f"[ERROR] README.md does not exist.")
+        print("[ERROR] README.md does not exist.")
         exit(1)
 
     if Path("model.png").exists():
@@ -120,11 +134,12 @@ def main():
     zip_tmp = fmu_out.with_suffix(".zip")
     zip_tmp.rename(fmu_out)
 
-    print(f"[INFO] Cleaning up.")
+    print("[INFO] Cleaning up.")
 
     shutil.rmtree(FMU_DIR)
-    
+
     print(f"[SUCCESS] FMU can be found at {fmu_out}.")
-        
+
+
 if __name__ == "__main__":
     main()
