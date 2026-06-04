@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "add_fmi2"
+name = "add"
 version = "0.1.0"
 dependencies = [
  "fmi_rs",

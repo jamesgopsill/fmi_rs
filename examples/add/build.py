@@ -10,28 +10,53 @@ import xml.etree.ElementTree as ET
 
 FMU_DIR = Path("target/fmu")
 
+
 def uuid7() -> str:
     ms = int(time.time() * 1000)
     rand = os.urandom(10)
-    uuid_int = (ms << 80) | (7 << 76) | ((rand[0] & 0x0f) << 72) | (rand[1] << 64) | (2 << 62) | (int.from_bytes(rand[2:], 'big'))
+    uuid_int = (
+        (ms << 80)
+        | (7 << 76)
+        | ((rand[0] & 0x0F) << 72)
+        | (rand[1] << 64)
+        | (2 << 62)
+        | (int.from_bytes(rand[2:], "big"))
+    )
     return str(uuid.UUID(int=uuid_int))
+
 
 def shell_cmd(cmd: str) -> str:
     result = subprocess.run(cmd, capture_output=True, shell=True)
     if result.returncode != 0:
         print(f"[ERROR] (cmd) {result.stderr}")
         exit(1)
-    return result.stdout.strip()
+    return result.stdout.decode().strip()
+
+
+def stream_shell_cmd(cmd: str):
+    process = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, text=True
+    )
+    if process.stdout is None:
+        print("[ERROR] no stdout")
+        exit(1)
+    for line in process.stdout:
+        print(line.strip())
+    process.wait()
+    if process.returncode != 0:
+        print(f"[ERROR] Command failed with exit code {process.returncode}")
+        exit(1)
 
 
 def main():
     if FMU_DIR.exists():
         print("[INFO] Removing old fmu temp directory.")
         shutil.rmtree(FMU_DIR)
-    FMU_DIR.mkdir(parents = True)
+    FMU_DIR.mkdir(parents=True)
 
     print("[INFO] Building FMU")
-    shell_cmd("cargo build --release --target=x86_64-pc-windows-gnu")
+    stream_shell_cmd("cargo build --release --target=x86_64-pc-windows-gnu")
+    stream_shell_cmd("cargo build --release --target=x86_64-unknown-linux-gnu")
 
     print("[INFO] Fetching metadata from cargo")
     manifest_raw = shell_cmd("cargo read-manifest")
@@ -44,7 +69,7 @@ def main():
     pkg_description = manifest_json["description"]
     print(f"[INFO] PKG DESCRIPTION: {pkg_description}")
 
-    git_remote_url = shell_cmd("git remote get-url origin").decode()
+    git_remote_url = shell_cmd("git remote get-url origin")
     print(f"[INFO] GIT URL: {git_remote_url}")
 
     guid = uuid7()
@@ -55,7 +80,7 @@ def main():
     tree = ET.parse("modelDescription.xml")
     root = tree.getroot()
 
-    root.set("modelName", "fmu--"+pkg_name)
+    root.set("modelName", "fmu--" + pkg_name)
     root.set("description", pkg_description)
     root.set("guid", guid)
     root.set("version", pkg_version)
@@ -63,7 +88,8 @@ def main():
     root.set("generationDateAndTime", build_date)
 
     me = root.find("ModelExchange")
-    me.set("modelIdentifier", pkg_name)
+    if me is not None:
+        me.set("modelIdentifier", pkg_name)
 
     # Vendor Annotations
     annotations = ET.Element("VendorAnnotations")
@@ -87,30 +113,49 @@ def main():
             el.tail = None
     ET.indent(root, space="  ")
 
-    print(f"[INFO] Writing the XML")
+    print("[INFO] Writing the XML")
     xml_out = FMU_DIR / "modelDescription.xml"
     tree.write(xml_out, encoding="utf-8", xml_declaration=True)
 
     # Copying the files
     bin_path = FMU_DIR / "binaries" / "win64"
-    bin_path.mkdir(parents = True)
-    doc_path = FMU_DIR / "documentation"
-    doc_path.mkdir(parents = True)
+    bin_path.mkdir(parents=True)
 
     dll = Path("target") / "x86_64-pc-windows-gnu" / "release" / f"{pkg_name}.dll"
     if not dll.exists():
         print(f"[ERROR] {dll} does not exist.")
         exit(1)
+    shutil.copy(dll, bin_path)
 
+    bin_path = FMU_DIR / "binaries" / "linux64" / f"{pkg_name}.so"
+    bin_path.mkdir(parents=True)
+
+    so = Path("target") / "x86_64-unknown-linux-gnu" / "release" / f"lib{pkg_name}.so"
+    if not so.exists():
+        print(f"[ERROR] {so} does not exist.")
+        exit(1)
+    shutil.copy(so, bin_path)
+
+    doc_path = FMU_DIR / "documentation"
+    doc_path.mkdir(parents=True)
     if not Path("README.md").exists():
-        print(f"[ERROR] README.md does not exist.")
+        print("[ERROR] README.md does not exist.")
         exit(1)
 
-    if Path("model.png").exists():
+    icon = Path("model.png")
+    if icon.exists():
         shutil.copy("model.png", FMU_DIR)
+    else:
+        print(
+            "[INFO] No model.png found. If you want a icon for your fmu then add a model.png file to the root of your project."
+        )
 
-    shutil.copy(dll, bin_path)
-    shutil.copy("README.md", doc_path)
+    readme = Path("README.md")
+    if not readme.exists():
+        print("[ERROR] No README.md found.")
+        exit(1)
+
+    shutil.copy(readme, FMU_DIR)
 
     fmu_out = Path("target") / f"{pkg_name}.fmu"
     if fmu_out.exists():
@@ -120,11 +165,12 @@ def main():
     zip_tmp = fmu_out.with_suffix(".zip")
     zip_tmp.rename(fmu_out)
 
-    print(f"[INFO] Cleaning up.")
+    print("[INFO] Cleaning up.")
 
     shutil.rmtree(FMU_DIR)
-    
+
     print(f"[SUCCESS] FMU can be found at {fmu_out}.")
-        
+
+
 if __name__ == "__main__":
     main()

@@ -9,13 +9,31 @@
   crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    renderMathInElement(document.body, {
-      delimiters: [
-        {left: "$$", right: "$$", display: true},
-        {left: "\\(", right: "\\)", display: false},
-        {left: "$", right: "$", display: false},
-        {left: "\\[", right: "\\]", display: true},
-      ],
+    console.log("DOMContentLoaded");
+
+    // 1. Render Block Math (```math)
+    document.querySelectorAll("pre.language-math code").forEach(function (block) {
+      console.log("GOT HERE");
+      var wrapper = document.createElement("div");
+      katex.render(block.textContent, wrapper, {displayMode: true, throwOnError: false});
+      //block.parentElement.replaceWith(wrapper);
+      // Want to exchange it for <div class="example-wrap">
+      const parent_parent = block.parentElement.parentElement.replaceWith(wrapper);
+    });
+
+    // 2. Render Inline Math (`$...$`)
+    document.querySelectorAll("code").forEach(function (block) {
+      // Ignore normal code blocks inside <pre> tags
+      if (block.parentElement.tagName === "PRE") return;
+
+      var text = block.textContent;
+      // Strictly target code spans that begin and end with $
+      if (text.startsWith("$") && text.endsWith("$") && text.length > 1) {
+        var math = text.substring(1, text.length - 1);
+        var span = document.createElement("span");
+        katex.render(math, span, {displayMode: false, throwOnError: false});
+        block.replaceWith(span);
+      }
     });
   });
 </script>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="2.0"
+  author = "James Gopsill"
+  license="MIT"
+  variableNamingConvention="flat"
+  numberOfEventIndicators="0">
+
+  <ModelExchange />
+
+  <ModelVariables>
+    <ScalarVariable name="out" valueReference="0" causality="output">
+      <Real />
+    </ScalarVariable>
+    <ScalarVariable name="license" valueReference="1" causality="parameter" variability="fixed">
+      <String start="" />
+    </ScalarVariable>
+  </ModelVariables>
+
+</fmiModelDescription>

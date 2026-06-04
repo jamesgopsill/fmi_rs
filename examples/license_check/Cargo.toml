@@ -1,0 +1,19 @@
+[package]
+name = "license_check"
+description = "A minmally weak license check in an FMU."
+version = "0.1.0"
+edition = "2024"
+
+[profile.release]
+panic = "abort" # Remove stack unwinding
+lto = true
+codegen-units = 1
+opt-level = 3 # Maximise optimisation
+strip = true # Remove symbol tables and debug information
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+fmi_rs = { path = "../../fmi_rs" }
+

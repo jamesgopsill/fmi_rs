@@ -1,6 +1,6 @@
 [package]
-name = "add_fmi2"
-description = "Add two numbers together."
+name = "add"
+description = "Adds two numbers together using the FMI2 standard."
 version = "0.1.0"
 edition = "2024"
 

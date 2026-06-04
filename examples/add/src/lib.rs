@@ -21,8 +21,6 @@ impl Fmi2 for Add {
 
     fn get_real(&mut self, vr: u32, value: &mut f64) -> Fmi2Status {
         match vr {
-            0 => *value = self.a,
-            1 => *value = self.b,
             2 => *value = self.a + self.b,
             _ => return Fmi2Status::ERROR,
         }
