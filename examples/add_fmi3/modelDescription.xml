@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
+  xmlns="http://fmi-standard.org/fmi-model-description.xml"
   fmiVersion="3.0"
-  modelName=""
-  description=""
-  instantiationToken=""
-  version=""
-  generationDateAndTime=""
-  generationTool="fmi_rs"
   author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat">

@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
+  xmlns="http://fmi-standard.org/fmi-model-description.xml"
   fmiVersion="2.0"
-  modelName=""
-  description=""
-  guid=""
-  version=""
-  generationDateAndTime=""
-  generationTool="fmi_rs"
   author = "James Gopsill"
   license="MIT"
   variableNamingConvention="flat"
   numberOfEventIndicators="0">
 
-  <!-- modelIdentifier: Name of the binary. -->
   <CoSimulation />
 
   <ModelExchange />
@@ -52,7 +46,6 @@
 
   <ModelStructure>
     <Outputs>
-      <!-- Indexed as they appear in this file. -->
       <Unknown index="5" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
       <Unknown index="6" dependencies="1 2 3 4" dependenciesKind="fixed fixed fixed fixed" />
     </Outputs>

@@ -1,6 +1,11 @@
-[workspace]
-resolver = "3"
-members = [
-  "sub",
-  "xtask"
-]
+[package]
+name = "sub"
+description = "Subtract b from a."
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+fmi_rs = { path = "../../fmi_rs" }

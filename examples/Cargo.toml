@@ -1,0 +1,21 @@
+[workspace]
+resolver = "3"
+members = [
+  "add",
+  "add_fmi3",
+  "add_thread",
+  "bouncing_ball",
+  "counter",
+  "license_check",
+  "mul",
+  "spring_mass_damper",
+  "sub",
+  "xtask"
+]
+
+[profile.release]
+panic = "abort" # Remove stack unwinding
+lto = true
+codegen-units = 1
+opt-level = 3 # Maximise optimisation
+strip = true # Remove symbol tables and debug information

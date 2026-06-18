@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
+  xmlns="http://fmi-standard.org/fmi-model-description.xml"
   fmiVersion="2.0"
-  author = "James Gopsill"
+  author="James Gopsill"
   license="MIT"
   variableNamingConvention="flat"
   numberOfEventIndicators="0">
@@ -22,7 +23,6 @@
 
   <ModelStructure>
     <Outputs>
-      <!-- Indexed as they appear in this file. -->
       <Unknown index="3" dependencies="1 2" dependenciesKind="fixed fixed" />
     </Outputs>
   </ModelStructure>
