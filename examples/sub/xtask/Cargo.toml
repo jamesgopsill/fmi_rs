@@ -1,0 +1,12 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+zip = "8"
+minidom = "0.19"
+quick-xml = "0.40"
+uuid = { version = "1", features = ["v7"] }
+chrono = "0.4"
+cargo_metadata = "0.23"

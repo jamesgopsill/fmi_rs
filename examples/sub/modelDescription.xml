@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fmiModelDescription
+  xmlns="http://fmi-standard.org/fmi-model-description.xml"
   fmiVersion="2.0"
   author = "James Gopsill"
   license="MIT"

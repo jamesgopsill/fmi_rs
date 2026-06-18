@@ -1,16 +1,6 @@
-[package]
-name = "sub"
-description = "Subtract b from a."
-version = "0.1.0"
-edition = "2024"
-
-[profile.release]
-panic = "abort"
-lto = true
-codegen-units = 1
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-fmi_rs = { path = "../../fmi_rs" }
+[workspace]
+resolver = "3"
+members = [
+  "sub",
+  "xtask"
+]
